@@ -8,7 +8,7 @@ from util.pipeline import evaluate_resume_against_jd
 if __name__ == "__main__":
     load_dotenv()
 
-    resume_text = """"Aarav  Mukh erjee
+    resume_text = """"Aarav  Mukherjee
 Software  Engineer
 Ph: +91-98765O1234    •  Emal: aarav.mukherjeegmail.com
 Linkedln:  ln/k/aarav-mukherjee   •  Location: Kol kata, India
@@ -78,98 +78,34 @@ Available on request.
 """
     jd_text = """
 
-Software Development Engineer (SDE I / II)
+Meta is seeking talented engineers to join our teams in building cutting-edge products, with the mission of connecting billions of people around the world. As a member of our team, you will have the opportunity to work on complex technical problems, build new features, and improve existing products across various platforms, including mobile devices and web applications. Our teams are constantly pushing the boundaries of user experience, and we're looking for passionate individuals who can help us advance the way people connect globally. If you're interested in joining a world-class team and working on exciting projects that have a significant impact, we encourage you to apply.
 
-Location: Bengaluru / Hyderabad / Remote (India)
-Company: Oracle / FAANG-equivalent enterprise
+Software Engineer (University Grad) - Bangalore Responsibilities:
 
-About the Role
+Develop a strong understanding of relevant product area, codebase, and/or systems
+Demonstrate proficiency in data analysis, programming and software engineering
+Produce high quality code with good test coverage, using modern abstractions and frameworks
+Work independently, use available resources to get unblocked, and complete tasks on-schedule by exercising strong judgement and problem solving skills
+Master Meta’s development standards from developing to releasing code in order to take on tasks and projects with increasing levels of complexity
+Actively seek and give feedback in alignment with Meta’s Performance Philosophy
 
-We are seeking passionate, inventive, and results-driven Software Development Engineers to design, develop, and deliver high-impact software systems used by millions of customers worldwide. As an SDE, you will work in an agile, collaborative environment and play a key role in building scalable distributed systems, optimizing backend performance, and improving developer productivity across teams.
+Minimum Qualifications:
 
-You will own projects end-to-end — from design and implementation to testing and deployment — while working alongside some of the best engineers in the industry.
+Currently has, or is in the process of obtaining a Bachelor's degree in Computer Science, Computer Engineering, relevant technical field, or equivalent practical experience. Degree must be completed prior to joining Meta
+Experience coding in an industry-standard language (e.g. Java, Python, C++, JavaScript)
+Must obtain work authorization in country of employment at the time of hire, and maintain ongoing work authorization during employment
 
-Responsibilities
+Preferred Qualifications:
 
-Design, develop, test, and deploy scalable, reliable, and maintainable software systems.
+Demonstrated software engineering experience from previous internship, work experience, coding competitions, or publications
+Currently has, or is in the process of obtaining, a Bachelors or Masters degree in Computer Science or a related field
 
-Translate functional and technical requirements into detailed architecture and design.
+About Meta:
 
-Write clean, efficient, well-documented, and reusable code following best software engineering practices.
+Meta builds technologies that help people connect, find communities, and grow businesses. When Facebook launched in 2004, it changed the way people connect. Apps like Messenger, Instagram and WhatsApp further empowered billions around the world. Now, Meta is moving beyond 2D screens toward immersive experiences like augmented and virtual reality to help build the next evolution in social technology. People who choose to build their careers by building with us at Meta help shape a future that will take us beyond what digital connection makes possible today—beyond the constraints of screens, the limits of distance, and even the rules of physics.
 
-Participate in code reviews, architectural discussions, and team design sessions.
+Individual compensation is determined by skills, qualifications, experience, and location. Compensation details listed in this posting reflect the base hourly rate, monthly rate, or annual salary only, and do not include bonus, equity or sales incentives, if applicable. In addition to base compensation, Meta offers benefits. Learn more about  benefits  at Meta.
 
-Collaborate closely with product managers, designers, and QA engineers to deliver high-quality solutions.
-
-Contribute to continuous improvement in development processes, deployment pipelines, and system observability.
-
-Analyze and improve the efficiency, scalability, and stability of distributed systems.
-
-Debug production issues across services and multiple levels of the stack.
-
-Required Qualifications
-
-Bachelor’s or Master’s degree in Computer Science, Engineering, or related technical discipline.
-
-Proficiency in at least one modern programming language such as Java, C++, Python, Go, or Kotlin.
-
-Strong fundamentals in data structures, algorithms, object-oriented design, and system design.
-
-Solid understanding of distributed systems, RESTful APIs, and microservices architecture.
-
-Experience with SQL/NoSQL databases, version control (Git), and CI/CD pipelines.
-
-Familiarity with cloud platforms (AWS, Azure, GCP, or Oracle Cloud).
-
-Preferred Qualifications
-
-Experience building and scaling backend systems with high availability and low latency.
-
-Working knowledge of containerization and orchestration tools (Docker, Kubernetes).
-
-Exposure to machine learning pipelines, streaming systems (Kafka, Spark), or large-scale data processing.
-
-Experience with frontend frameworks (React, Angular, or Vue) is a plus.
-
-Contributions to open-source projects or a strong GitHub/technical blog presence.
-
-Soft Skills
-
-Strong problem-solving and analytical skills.
-
-Excellent communication and collaboration abilities.
-
-Ownership mindset and ability to thrive in ambiguous, fast-paced environments.
-
-Passion for learning, mentoring, and technical excellence.
-
-Compensation & Benefits
-
-Competitive base salary with performance-based bonuses.
-
-Stock options / RSUs (depending on level and company).
-
-Health and wellness benefits, flexible working hours, and learning reimbursements.
-
-Opportunities to work on cross-functional, high-impact global projects.
-
-Sample Job Titles under Similar Roles
-
-Software Development Engineer (SDE I / SDE II)
-
-Backend Engineer / Full-Stack Engineer
-
-Cloud Application Developer
-
-Systems Engineer – Distributed Computing
-
-Software Engineer – Data Platform
-
-Would you like me to also:
-
-🔹 Generate an OCR-style extracted version of this JD (with typical OCR distortions)?
-
-🔹 Or produce a JD–Resume matching pair, where this JD is paired with the earlier Aarav Mukherjee OCR resume for a realistic ATS or ML model test case?
 """
     if not resume_text or not jd_text:
         raise ValueError("Both resume text and job description are required.")
