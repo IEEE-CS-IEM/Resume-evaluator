@@ -9,8 +9,9 @@ LLMFactory is can also be used for the same.
 ##  Features
 
 - **Multi-LLM Support**: Compatible with multiple language models (Gemini, Mistral, local Ollama models)
-- **Intelligent Resume Analysis**: Evaluates resumes against specific job requirements
-- **Structured Output**: Provides JSON-formatted evaluation reports
+- **Three-Stage Pipeline**: Dedicated LLM prompts for resume summarisation, JD extraction, and fit comparison
+- **Structured Output**: Provides JSON-formatted evaluation reports plus deterministic ATS scoring
+- **Keyword + LLM Scoring**: Blends objective keyword alignment with optional LLM readiness scores
 - **Modular Architecture**: Clean separation of concerns with utility modules
 - **Environment Management**: Secure API key management with environment variables
 
@@ -20,11 +21,18 @@ LLMFactory is can also be used for the same.
 LLM-RESUME_EVALUATOR/
 ├── util/                       # Utility modules
 │   ├── __pycache__/           # Python cache files
-│   ├── .env                   # Environment variables (not in repo)
-│   ├── constants.py           # Model configuration constants
-│   ├── llm_factory.py         # LLM factory for multi-provider support
-│   ├── simpleagent.py         # Simplified agent using Google Gemini
-│   └── system_prompt.py       # System prompts for resume evaluation
+│   ├── constants.py           # Model configuration constants and skill taxonomy
+│   ├── fit_comparator.py      # LLM-backed narrative fit evaluation
+│   ├── jd_resume_analyzer.py  # Deterministic keyword + ATS scorer
+│   ├── jd_structured_summary.py # LLM-based JD summariser
+│   ├── pipeline.py            # Orchestrates resume→JD→comparison workflow
+│   ├── resume_summary_analyzer.py # Extracts signals from LLM resume summary
+│   ├── resume_summary_generator.py # LLM-based resume summariser
+│   ├── simpleagent.py         # LLM client wrapper
+│   └── system_prompt.py       # System prompts for each pipeline stage
+├── docs/
+│   ├── architecture.md        # Full algorithm and module documentation
+│   └── scoring.md             # Scoring methodology documentation
 ├── .venv/                     # Virtual environment (Python)
 ├── genai_env/                 # GenAI specific environment
 ├── langchain_env/             # LangChain specific environment
@@ -146,29 +154,15 @@ The system returns a structured JSON evaluation:
 
 ### Core Components
 
-1. **LLMTest.py**: Main application entry point
-   - Handles user input collection
-   - Orchestrates the evaluation process
-   - Displays results
-
-2. **util/simpleagent.py**: Google Gemini Agent
-   - Simplified interface for Gemini API
-   - Handles message formatting and API calls
-   - Primary evaluation engine (currently active)
-
-3. **util/llm_factory.py**: Multi-LLM Factory Pattern
-   - Supports multiple LLM providers (Mistral, Gemini, Ollama)
-   - Dynamic model selection based on environment configuration
-   - Extensible architecture for adding new providers
-
-4. **util/system_prompt.py**: Evaluation Logic
-   - Contains expert-level resume evaluation prompts
-   - Defines structured output format
-   - Ensures consistent evaluation criteria
-
-5. **util/constants.py**: Configuration Constants
-   - Model name definitions
-   - Version management for different LLM providers
+1. **util/pipeline.py** – Coordinates the three-stage evaluation workflow (resume → JD → comparison).
+2. **util/resume_summary_generator.py** – LLM-driven resume summariser that extracts ATS-ready signals.
+3. **util/jd_structured_summary.py** – LLM-driven JD analyser that builds a structured requirement profile.
+4. **util/jd_resume_analyzer.py** – Deterministic scorer that matches resume vs JD and computes ATS metrics.
+5. **util/fit_comparator.py** – LLM narrative layer that fuses scoring data into actionable feedback.
+6. **util/resume_summary_analyzer.py** – Normalises resume summary output for the scoring engine.
+7. **util/simpleagent.py / util/system_prompt.py** – Shared LLM client wrapper and prompt library.
+8. **util/constants.py** – Skill taxonomies, knowledge keywords, and scoring weights.
+9. **LLMTest.py** – Example script wiring the pipeline together for local testing.
 
 ### Supported LLM Providers
 
@@ -201,11 +195,11 @@ local_llm = "llama3.2:3b"
 
 ### Adding New LLM Providers
 
-1. Install the provider's LangChain integration
-2. Add the provider to `util/llm_factory.py`
-3. Update the model mapping in `get_model_name()`
-4. Add API key handling in `get_api_key()`
-5. Implement the model instantiation logic
+1. Install the provider's SDK or LangChain integration inside your virtual environment.
+2. Extend `util/simpleagent.py` to recognise the new provider and configure credentials.
+3. Add the provider-specific prompt logic if different prompting is required.
+4. Update `requirements.txt` with the dependency so deployments remain reproducible.
+5. Document the new provider in `docs/architecture.md` for future contributors.
 
 ### Customizing Evaluation Criteria
 
@@ -218,13 +212,21 @@ Modify `util/system_prompt.py` to adjust:
 ##  Dependencies
 
 ### Core Dependencies
-- `langchain-mistralai`: MistralAI integration
-- `langchain-openai`: OpenAI integration (future use)
-- `langchain-ollama`: Local model support
-- `langchain-google-genai`: Google GenAI integration
-- `langchain-core`: Core LangChain functionality
-- `langchain-community`: Community extensions
-- `python-dotenv`: Environment variable management
-- `genai`: Google Generative AI library
+- `langchain-mistralai` – MistralAI chat integration
+- `langchain-google-genai` – Google Gemini chat integration
+- `langchain-core>=0.2` – Core LangChain message abstractions
+- `langchain-community` – Shared message and tool primitives
+- `python-dotenv` – Environment variable management
+- `python-docx` – DOC/DOCX parsing for job descriptions
+- `pdfplumber` – PDF parsing for job descriptions
+- `google-generativeai` – Native Gemini client used by `simpleagent`
 
-*Last updated: July 22, 2025*
+### Optional Dependencies
+- `langchain-community[redis,mongo]`, `langchain-openai`, or other ecosystem packages can be added as needed but are not required by the default pipeline.
+
+##  Further Documentation
+
+- `docs/architecture.md` – End-to-end explanation of the pipeline, module responsibilities, and algorithms.
+- `docs/scoring.md` – Detailed ATS scoring formula and subscores.
+
+*Last updated: July 2025*
