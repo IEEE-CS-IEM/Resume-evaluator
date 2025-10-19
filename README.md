@@ -32,6 +32,7 @@ LLM-RESUME_EVALUATOR/
 │   └── system_prompt.py       # System prompts for each pipeline stage
 ├── docs/
 │   ├── architecture.md        # Full algorithm and module documentation
+│   ├── integration-guide.md   # Hand-holding integration recipes
 │   └── scoring.md             # Scoring methodology documentation
 ├── .venv/                     # Virtual environment (Python)
 ├── genai_env/                 # GenAI specific environment
