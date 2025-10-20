@@ -31,7 +31,7 @@ When the LLM summary contains an explicit numeric score (e.g. “ATS Score: 78�
 final_score = 0.6 * keyword_score + 0.4 * llm_score
 ```
 
-If the LLM does not supply a score, a zero placeholder is used for the LLM score and the keyword score is reported as the final ATS score. A boolean flag indicates whether the LLM score contributed to the blend.
+If the LLM does not supply a score, `util/resume_summary_analyzer` now synthesises a heuristic LLM score based on experience, skill breadth, quantified achievements, leadership indicators, and wording matches. The fallback is still capped between 0–100 and the flag `llm_score_available` remains `True`, signalling the downstream scorer to blend the value just like an explicit LLM score.
 
 ## Additional Insights
 

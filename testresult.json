@@ -2,32 +2,32 @@
   "jd_insights": {
     "role_title": "software engineer (university grad)",
     "seniority_level": "entry",
-    "summary": "Meta seeks entry-level software engineers to join its Bangalore team, focusing on building and improving products that connect billions globally. The role involves solving complex technical challenges, writing high-quality code, and contributing to platforms like mobile and web applications while adhering to Meta’s development standards. Engineers will grow through mentorship, feedback, and increasingly complex projects, directly impacting how people connect worldwide.",
+    "summary": "Meta seeks entry-level software engineers to join its Bangalore team, focusing on building and improving global-scale products (e.g., mobile/web apps, AR/VR). The role involves solving complex technical challenges, writing high-quality code, and contributing to systems that connect billions of users, with opportunities to grow into increasingly complex projects.",
     "domains": [
       "social technology",
       "mobile applications",
       "web applications",
-      "augmented reality (AR)",
-      "virtual reality (VR)",
-      "global connectivity"
+      "augmented reality (ar)",
+      "virtual reality (vr)",
+      "global-scale systems",
+      "user experience (ux)"
     ],
     "required_skills": [
+      "adherence to development standards (from coding to release)",
       "c++",
       "data analysis",
-      "feedback (giving/receiving)",
-      "independent work",
+      "giving/receiving feedback",
+      "independent task execution",
       "java",
       "javascript",
-      "judgement (technical decision-making)",
+      "judgement under ambiguity",
       "modern abstractions and frameworks",
       "problem solving",
       "programming",
-      "publications (technical)",
       "python",
       "software engineering",
-      "software engineering experience (internship/work/coding competitions)",
-      "test coverage",
-      "writing high-quality code"
+      "software engineering experience (internships, work, competitions, or publications)",
+      "writing high-quality code with test coverage"
     ],
     "skills_by_category": {
       "programming_languages": [
@@ -41,22 +41,12 @@
     "experience_band": "entry",
     "knowledge_requirements": [
       {
-        "text": "understanding of relevant product area, codebase, and/or systems",
+        "text": "Develop a strong understanding of relevant product area, codebase, and/or systems",
         "skills": [],
         "categories": {}
       },
       {
-        "text": "proficient in data analysis, programming and software engineering",
-        "skills": [],
-        "categories": {}
-      },
-      {
-        "text": "master Meta’s development standards from developing to releasing code",
-        "skills": [],
-        "categories": {}
-      },
-      {
-        "text": "familiarity with modern abstractions and frameworks",
+        "text": "Master Meta’s development standards from developing to releasing code in order to take on tasks and projects with increasing levels of complexity",
         "skills": [],
         "categories": {}
       }
@@ -67,41 +57,39 @@
       "apache airflow",
       "authentication/authorization (oauth2, jwt)",
       "aws",
-      "aws (ec2, s3, rds, lambda)",
-      "aws codepipeline",
+      "aws (ec2, s3, rds, lambda, codepipeline)",
       "ci/cd pipelines",
-      "code reviews & mentoring",
       "concurrency control",
-      "data processing (etl, ocr)",
-      "devops (ci/cd, cloud deployment)",
+      "data pipelines (etl)",
       "docker",
-      "e-commerce (marketplace prototypes)",
       "elasticsearch",
       "etl pipelines",
-      "fintech (payments, fraud detection)",
       "flask",
-      "full-stack development (frontend + backend)",
+      "fraud detection",
+      "full-stack development",
       "gcp",
       "git",
+      "invoice processing/ocr",
       "java",
       "javascript (es6+)",
       "jenkins",
       "jira",
       "kubernetes",
+      "mentorship & code reviews",
       "microservices architecture",
-      "ml model integration (fraud detection, ocr)",
-      "nlp (basic)",
+      "ml model integration",
       "node.js",
+      "p2p marketplaces (hackathon prototype)",
       "pandas",
-      "performance optimization (latency, throughput)",
+      "payments platforms",
+      "performance optimization",
       "postman",
       "python",
       "react",
-      "real-time systems (order matching)",
+      "real-time order matching",
       "redis",
       "redux",
       "restful api design",
-      "scala",
       "scikit-learn",
       "spring boot",
       "sql",
@@ -111,8 +99,7 @@
     "skills_by_category": {
       "programming_languages": [
         "java",
-        "python",
-        "scala"
+        "python"
       ],
       "frameworks": [
         "flask",
@@ -145,8 +132,13 @@
     "experience_band": "mid-level",
     "knowledge_mentions": [
       {
+        "level": "familiar",
+        "excerpt": "Domain exposure includes **payments, fraud detection, ETL, and real-time systems**.",
+        "skills": []
+      },
+      {
         "level": "unspecified",
-        "excerpt": "designed scalable microservices architectures with **concurrency control** (e.g., order matching system using redis for cache)",
+        "excerpt": "Designed scalable microservices with **concurrency control** (e.g., Redis-backed order-matching engine).",
         "skills": [
           "redis",
           "scala"
@@ -154,55 +146,49 @@
       },
       {
         "level": "unspecified",
-        "excerpt": "optimized ml inference services for production, including **model batching and throughput tuning**",
+        "excerpt": "Optimized ML inference pipelines for **production throughput**, including model batching and latency trade-offs.",
         "skills": []
       },
       {
         "level": "unspecified",
-        "excerpt": "implemented **oauth2/jwt authentication** and **role-based authorization** in spring boot/react applications",
+        "excerpt": "Implemented **CI/CD automation** (Jenkins + AWS CodePipeline) for zero-downtime deployments.",
         "skills": [
-          "react",
-          "spring boot"
+          "aws",
+          "jenkins"
         ]
       },
       {
         "level": "unspecified",
-        "excerpt": "developed **real-time data pipelines** (airflow, kafka-like systems) with fault tolerance and parallel processing",
-        "skills": [
-          "kafka"
-        ]
-      },
-      {
-        "level": "unspecified",
-        "excerpt": "applied **code-splitting and lazy loading** in react to improve ux response times",
+        "excerpt": "Applied **code-splitting and lazy loading** in React to improve UX response times.",
         "skills": [
           "react"
         ]
       },
       {
         "level": "unspecified",
-        "excerpt": "debugged and optimized **sql queries and etl jobs** for performance-critical workflows",
+        "excerpt": "Developed **ETL parallelization strategies** using Airflow to reduce runtime bottlenecks.",
         "skills": []
       },
       {
         "level": "unspecified",
-        "excerpt": "deployed containerized applications (docker/kubernetes) on aws with **auto-scaling and monitoring**",
-        "skills": [
-          "aws",
-          "docker",
-          "kubernetes"
-        ]
+        "excerpt": "Integrated **OAuth2/JWT** for secure authentication in full-stack applications.",
+        "skills": []
+      },
+      {
+        "level": "unspecified",
+        "excerpt": "Built **real-time systems** with low-latency requirements (e.g., order-matching engine).",
+        "skills": []
       }
     ],
     "quantification_suggestions": [
-      "Specify the **scale of the payments platform** (e.g., transactions/day) to contextualize the 30% latency improvement.",
-      "Clarify the **volume of invoices processed** by the OCR pipeline to quantify the 60% manual review reduction.",
-      "Add **team size or scope** for the ETL optimization (e.g., 'reduced runtime for 10TB daily jobs by 25%').",
-      "Define the **baseline throughput** for the fraud detection model (e.g., 'increased from 100 to 200 requests/sec').",
-      "Quantify the **impact of the hackathon prototype** (e.g., 'adopted by X users or acquired by Y company')."
+      "Specify the **absolute latency values** before/after the 30% reduction (e.g., 'from 200ms to 140ms').",
+      "Clarify the **baseline throughput** for the ML fraud detection system (e.g., 'from 1000 to 2000 requests/sec').",
+      "Define the **scale of the payments platform** (e.g., 'handling 10K transactions/day').",
+      "Quantify the **impact of React optimizations** (e.g., 'reduced bundle size by X% or improved FCP by Yms').",
+      "Add **team size or scope** for the Hackathon XYZ prototype (e.g., 'built in 48 hours with 3 teammates')."
     ],
-    "llm_score": 0.0,
-    "llm_score_available": false
+    "llm_score": 85.0,
+    "llm_score_available": true
   },
   "matching_summary": {
     "matched_skills": [
@@ -210,20 +196,19 @@
       "python"
     ],
     "missing_skills": [
+      "adherence to development standards (from coding to release)",
       "c++",
       "data analysis",
-      "feedback (giving/receiving)",
-      "independent work",
+      "giving/receiving feedback",
+      "independent task execution",
       "javascript",
-      "judgement (technical decision-making)",
+      "judgement under ambiguity",
       "modern abstractions and frameworks",
       "problem solving",
       "programming",
-      "publications (technical)",
       "software engineering",
-      "software engineering experience (internship/work/coding competitions)",
-      "test coverage",
-      "writing high-quality code"
+      "software engineering experience (internships, work, competitions, or publications)",
+      "writing high-quality code with test coverage"
     ],
     "category_breakdown": {
       "programming_languages": {
@@ -243,12 +228,12 @@
     "experience_relevance": "Experience exceeds requirement by approximately 4.5 years."
   },
   "scores": {
-    "keyword_score": 48.62,
-    "llm_score": 0.0,
-    "llm_score_used": false,
-    "final_ats_score": 29.17,
+    "keyword_score": 49.0,
+    "llm_score": 85.0,
+    "llm_score_used": true,
+    "final_ats_score": 63.4,
     "subscores": {
-      "skill_coverage": 0.12,
+      "skill_coverage": 0.13,
       "experience_alignment": 1.0,
       "knowledge_alignment": 0.2,
       "category_coverage": 1.0
@@ -256,18 +241,18 @@
   },
   "recommendations": {
     "quantification": [
-      "Specify the **scale of the payments platform** (e.g., transactions/day) to contextualize the 30% latency improvement.",
-      "Clarify the **volume of invoices processed** by the OCR pipeline to quantify the 60% manual review reduction.",
-      "Add **team size or scope** for the ETL optimization (e.g., 'reduced runtime for 10TB daily jobs by 25%').",
-      "Define the **baseline throughput** for the fraud detection model (e.g., 'increased from 100 to 200 requests/sec').",
-      "Quantify the **impact of the hackathon prototype** (e.g., 'adopted by X users or acquired by Y company')."
+      "Specify the **absolute latency values** before/after the 30% reduction (e.g., 'from 200ms to 140ms').",
+      "Clarify the **baseline throughput** for the ML fraud detection system (e.g., 'from 1000 to 2000 requests/sec').",
+      "Define the **scale of the payments platform** (e.g., 'handling 10K transactions/day').",
+      "Quantify the **impact of React optimizations** (e.g., 'reduced bundle size by X% or improved FCP by Yms').",
+      "Add **team size or scope** for the Hackathon XYZ prototype (e.g., 'built in 48 hours with 3 teammates')."
     ],
     "next_skills_to_learn": [
+      "adherence to development standards (from coding to release)",
       "c++",
       "data analysis",
-      "feedback (giving/receiving)",
-      "independent work",
-      "javascript"
+      "giving/receiving feedback",
+      "independent task execution"
     ]
   }
 }

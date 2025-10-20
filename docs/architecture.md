@@ -51,7 +51,7 @@ jd_text ─────▶ jd_structured_summary ──────────�
    - Accepts either the JSON payload or raw text.
    - Uses shared skill taxonomies to map skills by category.
    - Detects years of experience, knowledge mentions (with levels + associated skills), quantification gaps, and captures LLM ATS scores if present.
-   - Ensures numeric fields default to safe values (e.g., 0 for missing LLM scores).
+   - Synthesises a heuristic ATS score when the LLM omits one so downstream scoring always receives a blended value.
 
 ## Stage 2 – Job Description Structuring
 
@@ -79,7 +79,7 @@ jd_text ─────▶ jd_structured_summary ──────────�
      - `experience_alignment` 30%
      - `knowledge_level` 15%
      - `category_coverage` 10%
-   - Blends keyword score with LLM-provided ATS score if available (`final_ats_score = 0.6 * keyword + 0.4 * llm_score`).
+   - Blends keyword score with either the LLM-provided ATS score or the heuristic fallback (`final_ats_score = 0.6 * keyword + 0.4 * llm_score`), ensuring the final score always reflects both perspectives.
    - Generates additional insights: experience relevance message, quantification suggestions, next skills to learn.
    - Returns a JSON-ready dict with `jd_insights`, `resume_insights`, `matching_summary`, and `scores` (including per-component subscores).
 2. **Narrative Fit**: `util/fit_comparator.compare_resume_to_jd`

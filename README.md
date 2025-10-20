@@ -11,7 +11,7 @@ LLMFactory is can also be used for the same.
 - **Multi-LLM Support**: Compatible with multiple language models (Gemini, Mistral, local Ollama models)
 - **Three-Stage Pipeline**: Dedicated LLM prompts for resume summarisation, JD extraction, and fit comparison
 - **Structured Output**: Provides JSON-formatted evaluation reports plus deterministic ATS scoring
-- **Keyword + LLM Scoring**: Blends objective keyword alignment with optional LLM readiness scores
+- **Keyword + LLM Scoring**: Blends objective keyword alignment with LLM readiness scores, with a deterministic fallback when the model omits one
 - **Modular Architecture**: Clean separation of concerns with utility modules
 - **Environment Management**: Secure API key management with environment variables
 
@@ -26,7 +26,7 @@ LLM-RESUME_EVALUATOR/
 │   ├── jd_resume_analyzer.py  # Deterministic keyword + ATS scorer
 │   ├── jd_structured_summary.py # LLM-based JD summariser
 │   ├── pipeline.py            # Orchestrates resume→JD→comparison workflow
-│   ├── resume_summary_analyzer.py # Extracts signals from LLM resume summary
+│   ├── resume_summary_analyzer.py # Extracts signals from LLM resume summary and scores heuristics
 │   ├── resume_summary_generator.py # LLM-based resume summariser
 │   ├── simpleagent.py         # LLM client wrapper
 │   └── system_prompt.py       # System prompts for each pipeline stage
@@ -160,7 +160,7 @@ The system returns a structured JSON evaluation:
 3. **util/jd_structured_summary.py** – LLM-driven JD analyser that builds a structured requirement profile.
 4. **util/jd_resume_analyzer.py** – Deterministic scorer that matches resume vs JD and computes ATS metrics.
 5. **util/fit_comparator.py** – LLM narrative layer that fuses scoring data into actionable feedback.
-6. **util/resume_summary_analyzer.py** – Normalises resume summary output for the scoring engine.
+6. **util/resume_summary_analyzer.py** – Normalises resume summary output and synthesises ATS fallback scores for the scoring engine.
 7. **util/simpleagent.py / util/system_prompt.py** – Shared LLM client wrapper and prompt library.
 8. **util/constants.py** – Skill taxonomies, knowledge keywords, and scoring weights.
 9. **LLMTest.py** – Example script wiring the pipeline together for local testing.

@@ -100,6 +100,69 @@ def _extract_llm_score(text: str) -> Optional[float]:
         return None
 
 
+def _estimate_llm_score(
+    summary_text: str,
+    years_experience: Optional[float],
+    skills: List[str],
+    quantifiable_highlights: List[str],
+    quantification_suggestions: List[str],
+    leadership_signals: List[str],
+) -> float:
+    """
+    Heuristic fallback that approximates an ATS-style LLM score when the upstream
+    model does not provide one explicitly.
+    """
+    whitespace_stripped = summary_text.strip()
+    score = 55.0 if whitespace_stripped else 42.0
+
+    if years_experience is not None:
+        if years_experience >= 10:
+            score += 12.0
+        elif years_experience >= 7:
+            score += 10.0
+        elif years_experience >= 4:
+            score += 7.0
+        elif years_experience >= 1:
+            score += 4.0
+        else:
+            score += 2.0
+    else:
+        score -= 6.0
+
+    skill_bonus = min(15.0, len(skills) * 0.6)
+    score += skill_bonus
+
+    metrics_present = bool(
+        re.search(r"\b\d+(?:\.\d+)?\s*(?:%|x|k|m|million|billion)?", summary_text.lower())
+    ) or bool(quantifiable_highlights)
+    if metrics_present:
+        score += 8.0
+    else:
+        score -= 5.0
+
+    if quantification_suggestions:
+        score -= min(10.0, len(quantification_suggestions) * 2.0)
+
+    summary_lower = summary_text.lower()
+    leadership_keywords = constants.EXPERIENCE_LEVEL_KEYWORDS.get("leadership", set())
+    impact_keywords = constants.EXPERIENCE_LEVEL_KEYWORDS.get("impact", set())
+    delivery_keywords = constants.EXPERIENCE_LEVEL_KEYWORDS.get("delivery", set())
+
+    if any(keyword in summary_lower for keyword in leadership_keywords):
+        score += 4.0
+    if leadership_signals:
+        score += min(6.0, len(leadership_signals) * 2.0)
+
+    impact_hits = sum(1 for keyword in impact_keywords if keyword in summary_lower)
+    delivery_hits = sum(1 for keyword in delivery_keywords if keyword in summary_lower)
+    if impact_hits:
+        score += min(6.0, impact_hits * 1.5)
+    if delivery_hits:
+        score += min(4.0, delivery_hits * 1.5)
+
+    return round(max(0.0, min(score, 100.0)), 2)
+
+
 def analyze_resume_summary(summary_payload: Any) -> Dict[str, object]:
     """
     Analyse the LLM generated resume summary to extract structured signals
@@ -109,6 +172,8 @@ def analyze_resume_summary(summary_payload: Any) -> Dict[str, object]:
     direct_years: Optional[float] = None
     direct_knowledge: List[Dict[str, str]] = []
     direct_quant_suggestions: List[str] = []
+    direct_quant_highlights: List[str] = []
+    direct_leadership_signals: List[str] = []
     summary_text: str
 
     if isinstance(summary_payload, dict):
@@ -144,6 +209,16 @@ def analyze_resume_summary(summary_payload: Any) -> Dict[str, object]:
                             "skills": sorted(skills_hit),
                         }
                     )
+        direct_quant_highlights = [
+            str(value).strip()
+            for value in summary_payload.get("quantifiable_highlights", [])
+            if isinstance(value, str) and value.strip()
+        ]
+        direct_leadership_signals = [
+            str(value).strip()
+            for value in summary_payload.get("leadership_experience", [])
+            if isinstance(value, str) and value.strip()
+        ]
     else:
         summary_text = _normalize_text(summary_payload)
 
@@ -174,8 +249,19 @@ def analyze_resume_summary(summary_payload: Any) -> Dict[str, object]:
         )
 
     llm_score_raw = _extract_llm_score(summary_text)
-    llm_score_available = llm_score_raw is not None
-    llm_score = llm_score_raw if llm_score_raw is not None else 0.0
+    if llm_score_raw is not None:
+        llm_score = llm_score_raw
+        llm_score_available = True
+    else:
+        llm_score = _estimate_llm_score(
+            summary_text=summary_text,
+            years_experience=years_of_experience,
+            skills=skills_list,
+            quantifiable_highlights=direct_quant_highlights,
+            quantification_suggestions=quantification_suggestions,
+            leadership_signals=direct_leadership_signals,
+        )
+        llm_score_available = True
 
     return {
         "raw_summary": summary_text,

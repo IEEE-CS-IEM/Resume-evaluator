@@ -49,8 +49,8 @@ signals = analyze_resume_summary(resume_summary)
 - `experience_band`: entry/junior/mid-level/senior/principal/unknown.
 - `knowledge_mentions`: list of snippets with inferred level/skills.
 - `quantification_suggestions`: list of sentences that need metrics.
-- `llm_score`: float ATS score extracted from text or 0.0.
-- `llm_score_available`: boolean flag for the above.
+- `llm_score`: float ATS score (explicitly parsed from the LLM summary when present, otherwise a heuristic fallback).
+- `llm_score_available`: always `True` because the analyzer guarantees a usable score.
 
 **Common use-cases**
 - Pipeline steps preceding JD comparison.
@@ -106,7 +106,7 @@ evaluation = process_jd_and_resume(jd_text, resume_text)
 - `jd_insights`: structured JD info (skills, categories, experience band, knowledge).
 - `resume_insights`: structured resume data (skills, categories, experience, knowledge, quantification suggestions, llm score).
 - `matching_summary`: matched/missing skills, category breakdown, experience alignment (0-1), knowledge alignment (0-1), category coverage (0-1), experience relevance narration.
-- `scores`: keyword score, final ATS score, whether the LLM score was used, and subscores (skill coverage, experience alignment, knowledge alignment, category coverage).
+- `scores`: keyword score, final ATS score, `llm_score_used` (always true because the analyzer guarantees a score), and subscores (skill coverage, experience alignment, knowledge alignment, category coverage).
 - `recommendations`: quantification suggestions, next skills to learn.
 
 **Common use-cases**
