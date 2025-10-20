@@ -1,27 +1,88 @@
 import re
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 from util import constants
+from util.keyword_extractor import extract_keywords
+from util.skill_guard import filter_skills_via_llm
+from util.skill_classifier import classify_skills
 
 
 def _normalize_text(text: Optional[str]) -> str:
     return text or ""
 
 
-def _detect_skills(text: str) -> Tuple[Set[str], Dict[str, List[str]]]:
+def _keyword_present(text: str, keyword: str) -> bool:
+    pattern = rf"(?<!\w){re.escape(keyword)}(?!\w)"
+    return re.search(pattern, text) is not None
+
+
+def _find_raw_occurrence(candidate: str, text: str) -> Optional[str]:
+    pattern = re.compile(rf"(?<!\w){re.escape(candidate)}(?!\w)", re.IGNORECASE)
+    match = pattern.search(text)
+    if match:
+        return text[match.start() : match.end()]
+    return None
+
+
+def _looks_like_person_name(raw: Optional[str]) -> bool:
+    if not raw:
+        return False
+    tokens = [token for token in re.split(r"[^\w]+", raw) if token]
+    if not tokens or len(tokens) > 3:
+        return False
+    alphabetical = all(token.isalpha() for token in tokens)
+    title_case_tokens = sum(token[:1].isupper() for token in tokens)
+    if alphabetical and title_case_tokens == len(tokens):
+        return True
+    return False
+
+
+def _canonical_skill_key(value: str) -> str:
+    lowered = value.lower()
+    lowered = re.sub(r"\(.*?\)", " ", lowered)
+    lowered = lowered.replace("enabled", "")
+    lowered = re.sub(r"[^a-z0-9+#]+", " ", lowered)
+    lowered = re.sub(r"\b(retrieval augmented generation|retrieval-augmented generation|rag)\b", "rag", lowered)
+    lowered = re.sub(r"\s+", " ", lowered).strip()
+    return lowered
+
+
+def _detect_skills(text: str) -> List[str]:
     lower_text = text.lower()
-    category_hits: Dict[str, Set[str]] = {key: set() for key in constants.SKILL_CATEGORIES}
-
-    for category, keywords in constants.SKILL_CATEGORIES.items():
+    extracted_keywords = set(extract_keywords(text))
+    canonical_lookup: Dict[str, str] = {}
+    for keywords in constants.SKILL_CATEGORIES.values():
         for keyword in keywords:
-            if keyword in lower_text:
-                category_hits[category].add(keyword)
+            canonical_lookup.setdefault(keyword.lower(), keyword)
+            if _keyword_present(lower_text, keyword.lower()):
+                extracted_keywords.add(keyword.lower())
 
-    flat_skills = set().union(*category_hits.values())
-    ordered_categories = {
-        category: sorted(values) for category, values in category_hits.items() if values
-    }
-    return flat_skills, ordered_categories
+    normalized: Dict[str, str] = {}
+    for candidate in extracted_keywords:
+        original = canonical_lookup.get(candidate, candidate)
+        raw = _find_raw_occurrence(original, text)
+        if not canonical_lookup.get(candidate) and _looks_like_person_name(raw):
+            continue
+        chosen = (raw or original or candidate).strip()
+        key = _canonical_skill_key(chosen)
+        if not key:
+            continue
+        current = normalized.get(key)
+        if current is None or len(chosen) < len(current):
+            normalized[key] = chosen
+
+    filtered_skills = filter_skills_via_llm(list(normalized.values()))
+
+    deduped: Dict[str, str] = {}
+    for skill in filtered_skills:
+        key = _canonical_skill_key(skill)
+        if not key:
+            continue
+        current = deduped.get(key)
+        if current is None or len(skill) < len(current):
+            deduped[key] = skill
+
+    return list(deduped.values())
 
 
 def _extract_years_of_experience(text: str) -> Optional[float]:
@@ -63,7 +124,7 @@ def _extract_knowledge_mentions(text: str) -> List[Dict[str, str]]:
                 break
         if not level_tag:
             continue
-        skills, _ = _detect_skills(lower_sentence)
+        skills = sorted(_detect_skills(lower_sentence))
         mentions.append(
             {
                 "level": level_tag,
@@ -168,7 +229,7 @@ def analyze_resume_summary(summary_payload: Any) -> Dict[str, object]:
     Analyse the LLM generated resume summary to extract structured signals
     used downstream during JD comparison.
     """
-    direct_skills: Set[str] = set()
+    direct_skills: List[str] = []
     direct_years: Optional[float] = None
     direct_knowledge: List[Dict[str, str]] = []
     direct_quant_suggestions: List[str] = []
@@ -179,13 +240,9 @@ def analyze_resume_summary(summary_payload: Any) -> Dict[str, object]:
     if isinstance(summary_payload, dict):
         summary_text = _normalize_text(summary_payload.get("summary_text"))
         for collection_key in ("core_skills", "tooling", "domain_experience"):
-            direct_skills.update(
-                {
-                    str(value).lower()
-                    for value in summary_payload.get(collection_key, [])
-                    if isinstance(value, str) and value.strip()
-                }
-            )
+            for value in summary_payload.get(collection_key, []) or []:
+                if isinstance(value, str) and value.strip():
+                    direct_skills.append(value.strip())
         direct_years = summary_payload.get("total_years_experience")
         if isinstance(direct_years, str):
             try:
@@ -201,12 +258,12 @@ def analyze_resume_summary(summary_payload: Any) -> Dict[str, object]:
         if isinstance(knowledge_statements, list):
             for statement in knowledge_statements:
                 if isinstance(statement, str) and statement.strip():
-                    skills_hit, _ = _detect_skills(statement)
+                    skills_hit = _detect_skills(statement)
                     direct_knowledge.append(
                         {
                             "level": "unspecified",
                             "excerpt": statement.strip(),
-                            "skills": sorted(skills_hit),
+                            "skills": sorted(skills_hit, key=lambda val: val.lower()),
                         }
                     )
         direct_quant_highlights = [
@@ -222,19 +279,45 @@ def analyze_resume_summary(summary_payload: Any) -> Dict[str, object]:
     else:
         summary_text = _normalize_text(summary_payload)
 
-    skills, _ = _detect_skills(summary_text)
+    detected_skills = _detect_skills(summary_text)
     years_of_experience = _extract_years_of_experience(summary_text)
     if direct_years is not None:
         years_of_experience = direct_years
 
-    combined_skills = skills.union(direct_skills)
-    skills_list = sorted(combined_skills)
+    candidate_skills: List[str] = []
+    candidate_skills.extend(detected_skills)
+    candidate_skills.extend([skill for skill in direct_skills if skill])
+    candidate_skills = filter_skills_via_llm(candidate_skills)
 
-    skills_by_category: Dict[str, List[str]] = {}
-    for category, keywords in constants.SKILL_CATEGORIES.items():
-        hits = sorted({skill for skill in combined_skills if skill in keywords})
-        if hits:
-            skills_by_category[category] = hits
+    deduped: Dict[str, str] = {}
+    for skill in candidate_skills:
+        key = _canonical_skill_key(skill)
+        if not key:
+            continue
+        current = deduped.get(key)
+        if current is None or len(skill) < len(current):
+            deduped[key] = skill
+
+    skills_list = sorted(deduped.values(), key=lambda value: value.lower())
+
+    classification = classify_skills(skills_list)
+    if any(classification.values()):
+        skills_by_category = {
+            category: values for category, values in classification.items() if values
+        }
+    else:
+        fallback: Dict[str, List[str]] = {}
+        for category, keywords in constants.SKILL_CATEGORIES.items():
+            hits = [
+                skill
+                for skill in skills_list
+                if _canonical_skill_key(skill) in {
+                    _canonical_skill_key(keyword) for keyword in keywords
+                }
+            ]
+            if hits:
+                fallback[category] = sorted(set(hits), key=lambda val: val.lower())
+        skills_by_category = fallback
 
     knowledge_mentions = _extract_knowledge_mentions(summary_text)
     if direct_knowledge:

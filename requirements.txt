@@ -6,5 +6,9 @@ python-dotenv                                # For loading environment variables
 python-docx                                  # Read DOC/DOCX job descriptions
 pdfplumber                                   # Read PDF job descriptions
 google-generativeai                          # Gemini API client
-docx
-pdfplumber
+fastapi                                      # REST API framework
+uvicorn[standard]                            # ASGI server for FastAPI
+requests                                     # Client helper for pdfTest
+yake                                         # Keyword extraction (dynamic skill detection)
+pytesseract                                  # OCR fallback for scanned PDFs
+Pillow                                       # Image processing for OCR

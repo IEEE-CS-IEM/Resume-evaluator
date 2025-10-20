@@ -4,18 +4,34 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import docx
 import pdfplumber
+import pytesseract
 
 from util import constants
-from util.resume_summary_analyzer import analyze_resume_summary
+from util.resume_summary_analyzer import analyze_resume_summary, _canonical_skill_key
+from util.keyword_extractor import extract_keywords
+from util.skill_guard import filter_skills_via_llm
 
 
 def extract_text_from_file(file_path: str) -> str:
     ext = os.path.splitext(file_path)[1].lower()
     if ext == ".pdf":
+        pages_text: List[str] = []
         with pdfplumber.open(file_path) as pdf:
-            return "\n".join(
-                page.extract_text() for page in pdf.pages if page.extract_text()
-            )
+            for page in pdf.pages:
+                text = page.extract_text() or ""
+                if text.strip():
+                    pages_text.append(text)
+                    continue
+                try:
+                    pil_image = page.to_image(resolution=300).original
+                    if pil_image.mode not in ("RGB", "RGBA"):
+                        pil_image = pil_image.convert("RGB")
+                    ocr_text = pytesseract.image_to_string(pil_image)
+                    if ocr_text.strip():
+                        pages_text.append(ocr_text)
+                except Exception:
+                    continue
+        return "\n".join(segment for segment in pages_text if segment.strip())
     if ext in [".docx", ".doc"]:
         doc = docx.Document(file_path)
         return "\n".join(paragraph.text for paragraph in doc.paragraphs)
@@ -29,17 +45,80 @@ def _normalize(text: Optional[str]) -> str:
     return text or ""
 
 
+def _keyword_present(text: str, keyword: str) -> bool:
+    pattern = rf"(?<!\w){re.escape(keyword)}(?!\w)"
+    return re.search(pattern, text) is not None
+
+
+def _find_raw_occurrence(candidate: str, text: str) -> Optional[str]:
+    pattern = re.compile(rf"(?<!\w){re.escape(candidate)}(?!\w)", re.IGNORECASE)
+    match = pattern.search(text)
+    if match:
+        return text[match.start() : match.end()]
+    return None
+
+
+def _looks_like_person_name(raw: Optional[str]) -> bool:
+    if not raw:
+        return False
+    tokens = [token for token in re.split(r"[^\w]+", raw) if token]
+    if not tokens or len(tokens) > 3:
+        return False
+    alphabetical = all(token.isalpha() for token in tokens)
+    title_case_tokens = sum(token[:1].isupper() for token in tokens)
+    if alphabetical and title_case_tokens == len(tokens):
+        return True
+    return False
+
+
 def _detect_skills(text: str) -> Tuple[List[str], Dict[str, List[str]]]:
     lower_text = text.lower()
-    hits: Dict[str, List[str]] = {}
-    flat_skills: set[str] = set()
+    extracted_keywords = set(extract_keywords(text))
+    canonical_lookup: Dict[str, str] = {}
+    for keywords in constants.SKILL_CATEGORIES.values():
+        for keyword in keywords:
+            canonical_lookup.setdefault(keyword.lower(), keyword)
+            if _keyword_present(lower_text, keyword.lower()):
+                extracted_keywords.add(keyword.lower())
 
+    normalized: Dict[str, str] = {}
+    for candidate in extracted_keywords:
+        original = canonical_lookup.get(candidate, candidate)
+        raw = _find_raw_occurrence(original, text)
+        if not canonical_lookup.get(candidate) and _looks_like_person_name(raw):
+            continue
+        chosen = (raw or original or candidate).strip()
+        key = _canonical_skill_key(chosen)
+        if not key:
+            continue
+        current = normalized.get(key)
+        if current is None or len(chosen) < len(current):
+            normalized[key] = chosen
+
+    filtered_skills = filter_skills_via_llm(list(normalized.values()))
+
+    deduped: Dict[str, str] = {}
+    for skill in filtered_skills:
+        key = _canonical_skill_key(skill)
+        if not key:
+            continue
+        current = deduped.get(key)
+        if current is None or len(skill) < len(current):
+            deduped[key] = skill
+
+    final_skills = list(deduped.values())
+
+    category_hits: Dict[str, List[str]] = {}
     for category, keywords in constants.SKILL_CATEGORIES.items():
-        matched = sorted({keyword for keyword in keywords if keyword in lower_text})
-        if matched:
-            hits[category] = matched
-            flat_skills.update(matched)
-    return sorted(flat_skills), hits
+        matches = []
+        for keyword in keywords:
+            key = _canonical_skill_key(keyword)
+            if key in deduped:
+                matches.append(deduped[key])
+        if matches:
+            category_hits[category] = sorted(set(matches))
+
+    return final_skills, category_hits
 
 
 def _extract_required_experience(text: str) -> Optional[float]:
@@ -81,7 +160,7 @@ def _extract_knowledge_requirements(text: str) -> List[Dict[str, object]]:
         if not stripped:
             continue
         lower_sentence = stripped.lower()
-        if not any(keyword in lower_sentence for keyword in keywords):
+        if not any(_keyword_present(lower_sentence, phrase.lower()) for phrase in keywords):
             continue
         skills, skills_by_category = _detect_skills(lower_sentence)
         requirements.append(
@@ -97,9 +176,23 @@ def _extract_knowledge_requirements(text: str) -> List[Dict[str, object]]:
 def _skill_overlap(
     jd_skills: List[str], resume_skills: List[str]
 ) -> Tuple[List[str], List[str]]:
-    jd_set = set(jd_skills)
-    resume_set = set(resume_skills)
-    return sorted(jd_set & resume_set), sorted(jd_set - resume_set)
+    jd_map = {
+        _canonical_skill_key(skill): skill
+        for skill in jd_skills
+        if isinstance(skill, str) and _canonical_skill_key(skill)
+    }
+    resume_keys = {
+        _canonical_skill_key(skill)
+        for skill in resume_skills
+        if isinstance(skill, str) and _canonical_skill_key(skill)
+    }
+
+    matched_keys = sorted(jd_map.keys() & resume_keys)
+    missing_keys = sorted(jd_map.keys() - resume_keys)
+
+    matched = [jd_map[key] for key in matched_keys]
+    missing = [jd_map[key] for key in missing_keys]
+    return matched, missing
 
 
 def _category_overlap(
@@ -107,11 +200,27 @@ def _category_overlap(
 ) -> Dict[str, Dict[str, List[str]]]:
     breakdown: Dict[str, Dict[str, List[str]]] = {}
     for category, jd_items in jd_categories.items():
-        resume_items = set(resume_categories.get(category, []))
-        jd_items_set = set(jd_items)
+        resume_items = {
+            _canonical_skill_key(item)
+            for item in resume_categories.get(category, [])
+            if isinstance(item, str) and _canonical_skill_key(item)
+        }
+        jd_items_set = {
+            _canonical_skill_key(item)
+            for item in jd_items
+            if isinstance(item, str) and _canonical_skill_key(item)
+        }
         breakdown[category] = {
-            "matched": sorted(jd_items_set & resume_items),
-            "missing": sorted(jd_items_set - resume_items),
+            "matched": sorted(
+                item
+                for item in jd_items
+                if _canonical_skill_key(item) in resume_items
+            ),
+            "missing": sorted(
+                item
+                for item in jd_items
+                if _canonical_skill_key(item) not in resume_items
+            ),
         }
     return breakdown
 
@@ -159,17 +268,18 @@ def _knowledge_alignment(
         excerpt = mention.get("excerpt", "").lower()
         for category_keywords in constants.SKILL_CATEGORIES.values():
             for keyword in category_keywords:
-                if keyword in excerpt:
+                if _keyword_present(excerpt, keyword.lower()):
                     mention_skill_set.add(keyword)
     for requirement in knowledge_requirements:
         requirement_skills = set(requirement.get("skills", []))
         if not requirement_skills:
             # fallback: look for any overlap between requirement text and skills mentioned
+            requirement_text = requirement.get("text", "").lower()
             requirement_skills = {
                 keyword
                 for keyword_set in constants.SKILL_CATEGORIES.values()
                 for keyword in keyword_set
-                if keyword in requirement.get("text", "").lower()
+                if _keyword_present(requirement_text, keyword.lower())
             }
         if requirement_skills & resume_skill_set:
             coverage += 1
@@ -209,14 +319,71 @@ def _experience_relevance_statement(
     return f"Experience shortfall of approximately {abs(gap):.1f} years."
 
 
+def _infer_role_title(jd_text: str) -> Optional[str]:
+    def _clean_role_title(line: str) -> str:
+        trimmed = line.strip()
+        if " - " in trimmed:
+            left, right = trimmed.split(" - ", 1)
+            if not re.search(
+                r"(?i)\b(engineer|developer|designer|manager|analyst|scientist|specialist)\b",
+                right,
+            ):
+                return left.strip()
+        return trimmed
+
+    lines = [line.strip(" :-\u2022") for line in jd_text.splitlines()]
+    cleaned_lines = [line for line in lines if line.strip()]
+
+    for line in cleaned_lines:
+        if re.search(r"(?i)\bresponsibilities\b", line):
+            candidate = re.split(r"(?i)\bresponsibilities\b", line)[0].strip(" :-")
+            if candidate:
+                return _clean_role_title(candidate)
+
+    for line in cleaned_lines:
+        if re.search(r"(?i)\b(engineer|developer|designer|manager|analyst|scientist|specialist)\b", line):
+            return _clean_role_title(line)
+
+    return None
+
+
+def _infer_seniority(role_title: Optional[str], jd_text: str) -> str:
+    text_blob = " ".join(filter(None, [role_title, jd_text])).lower()
+    seniority_map = [
+        ("principal", ("principal", "distinguished")),
+        ("senior", ("senior", "lead", "staff")),
+        ("mid-level", ("mid level", "mid-level", "intermediate", "experienced")),
+        ("junior", ("junior", "associate")),
+        ("entry", ("entry level", "entry-level", "graduate", "university grad", "freshers", "new grad", "intern")),
+    ]
+
+    for label, keywords in seniority_map:
+        if any(keyword in text_blob for keyword in keywords):
+            return label
+
+    return "unspecified"
+
+
+def _summarise_text(jd_text: str, max_sentences: int = 3) -> str:
+    sentences = [segment.strip() for segment in re.split(r"[.\n]", jd_text) if segment.strip()]
+    selected = sentences[:max_sentences]
+    return ". ".join(selected).strip()
+
+
 def parse_jd(jd_text: str) -> Dict[str, object]:
     jd_text = _normalize(jd_text)
     skills, skills_by_category = _detect_skills(jd_text)
     required_years = _extract_required_experience(jd_text)
     knowledge_requirements = _extract_knowledge_requirements(jd_text)
+    role_title = _infer_role_title(jd_text)
+    seniority_level = _infer_seniority(role_title, jd_text)
+    summary = _summarise_text(jd_text)
 
     return {
         "raw_text": jd_text,
+        "role_title": role_title,
+        "seniority_level": seniority_level,
+        "summary": summary,
         "skills": skills,
         "skills_by_category": skills_by_category,
         "required_years": required_years,

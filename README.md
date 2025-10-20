@@ -11,8 +11,12 @@ LLMFactory is can also be used for the same.
 - **Multi-LLM Support**: Compatible with multiple language models (Gemini, Mistral, local Ollama models)
 - **Three-Stage Pipeline**: Dedicated LLM prompts for resume summarisation, JD extraction, and fit comparison
 - **Structured Output**: Provides JSON-formatted evaluation reports plus deterministic ATS scoring
+- **Precision Skill Detection**: Word-boundary aware taxonomy picks up real skills (including C, MATLAB, HTML/CSS, SQL) without substring hallucinations
+- **LLM Guardrails**: Every candidate skill list runs through clean-up and classification LLMs to drop noise and bucket skills intelligently
+- **OCR Ready**: Automatically falls back to Tesseract OCR for scanned PDFs so text extraction never silently fails
 - **Keyword + LLM Scoring**: Blends objective keyword alignment with LLM readiness scores, with a deterministic fallback when the model omits one
 - **Modular Architecture**: Clean separation of concerns with utility modules
+- **REST API Ready**: FastAPI service for PDF uploads and evaluation with Postman-friendly routes
 - **Environment Management**: Secure API key management with environment variables
 
 ##  Project Structure
@@ -30,6 +34,9 @@ LLM-RESUME_EVALUATOR/
 │   ├── resume_summary_generator.py # LLM-based resume summariser
 │   ├── simpleagent.py         # LLM client wrapper
 │   └── system_prompt.py       # System prompts for each pipeline stage
+│   ├── keyword_extractor.py   # YAKE-based dynamic keyword detection
+│   ├── skill_guard.py         # LLM post-processor that de-noises skill lists
+│   ├── skill_classifier.py    # LLM-driven categoriser for deduplicated skills
 ├── docs/
 │   ├── architecture.md        # Full algorithm and module documentation
 │   ├── integration-guide.md   # Hand-holding integration recipes
@@ -41,8 +48,11 @@ LLM-RESUME_EVALUATOR/
 ├── activate_genai.ps1         # PowerShell script for GenAI env
 ├── activate_langchain.bat     # Windows batch script for LangChain env
 ├── activate_langchain.ps1     # PowerShell script for LangChain env
+├── uploads/                   # User resume storage (created automatically)
 ├── .gitignore                 # Git ignore rules
-├── LLMTest.py                 # Main application entry point
+├── api_server.py              # FastAPI server exposing upload/evaluation routes
+├── LLMTest.py                 # Text-based evaluation example
+├── pdfTest.py                 # Client script to hit the FastAPI endpoints
 ├── requirements.txt           # Python dependencies
 └── README.md                  # This documentation
 ```
@@ -100,7 +110,7 @@ LLM-RESUME_EVALUATOR/
 
 ##  Usage
 
-### Basic Usage
+### Basic Usage (Command-Line)
 
 Run the main application:
 ```bash
@@ -218,6 +228,14 @@ Modify `util/system_prompt.py` to adjust:
 - `langchain-core>=0.2` – Core LangChain message abstractions
 - `langchain-community` – Shared message and tool primitives
 - `python-dotenv` – Environment variable management
+- `fastapi` – REST API powering PDF uploads/evaluation
+- `uvicorn[standard]` – ASGI server for running the FastAPI app
+- `requests` – Helper client used by `pdfTest.py`
+- `yake` – Keyword extraction that drives adaptive skill detection
+- `pytesseract` – OCR engine bridge for scanned PDFs
+- `Pillow` – Image handling for OCR fallback
+
+> **Note:** Tesseract OCR binaries must be installed separately (e.g., `brew install tesseract` on macOS, `sudo apt install tesseract-ocr` on Debian/Ubuntu).
 - `python-docx` – DOC/DOCX parsing for job descriptions
 - `pdfplumber` – PDF parsing for job descriptions
 - `google-generativeai` – Native Gemini client used by `simpleagent`
@@ -231,3 +249,26 @@ Modify `util/system_prompt.py` to adjust:
 - `docs/scoring.md` – Detailed ATS scoring formula and subscores.
 
 *Last updated: July 2025*
+### REST API Workflow
+
+1. **Start the FastAPI server**
+   ```bash
+   uvicorn api_server:app --host 0.0.0.0 --port 8000 --reload
+   ```
+
+2. **Upload a resume PDF**  
+   - POST `http://localhost:8000/users/{user_id}/resume`  
+   - Body: `multipart/form-data` with a `file` field (use Postman or the `pdfTest.py` helper).
+
+3. **Trigger evaluation**  
+   - POST `http://localhost:8000/users/{user_id}/evaluate`  
+   - Body: JSON `{ "jd_text": "<optional JD text>" }`.  
+     When omitted, the Meta JD from `LLMTest.py` is used automatically.
+
+4. **Example client**  
+   ```bash
+   python pdfTest.py --resume /path/to/resume.pdf --user-id demo123
+   ```
+   The script uploads the file, calls the evaluation route, and writes the JSON to `pdf_test_result.json`.
+
+All routes are designed to be Postman-friendly: use the same URLs and payloads above, and inspect the JSON responses.

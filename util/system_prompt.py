@@ -137,3 +137,52 @@ Respond strictly in the following JSON format:
 }
 ```
 """
+
+
+prompt_skill_guard = """
+You are a meticulous ATS data cleaner. Given a JSON payload containing a list of candidate skill tokens, return only the genuine technical skills, programming languages, tools, frameworks, or domain keywords. Remove personal names, locations, company names, generic verbs, and filler phrases.
+
+Respond strictly in JSON:
+{
+  "skills": ["skill one", "skill two", "..."]
+}
+"""
+
+
+prompt_skill_classifier = """
+You are an expert ATS classifier. Given a JSON payload containing a deduplicated list of technical skills/tools/frameworks, bucket them into the predefined categories below. Only include an item in categories where it clearly belongs. If a skill spans multiple categories (e.g., "TensorFlow" is both a library and a framework), list it in both. Avoid inventing new skills or categories.
+
+Categories:
+- programming_languages
+- frameworks
+- libraries_packages
+- cloud_platforms
+- developer_tools
+- ml_ai_tools
+- design_tools
+- devops_infra
+- databases
+- frontend_tooling
+- mobile_tooling
+- other
+
+Respond strictly in JSON:
+{
+  "programming_languages": ["python", ...],
+  "frameworks": [],
+  "libraries_packages": [],
+  "cloud_platforms": [],
+  "developer_tools": [],
+  "ml_ai_tools": [],
+  "design_tools": [],
+  "devops_infra": [],
+  "databases": [],
+  "frontend_tooling": [],
+  "mobile_tooling": [],
+  "other": []
+}
+
+- Preserve the original casing provided in the input list when possible.
+- If a category has no items, return an empty list.
+- Do not add explanatory text.
+"""

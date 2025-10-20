@@ -11,10 +11,12 @@ SKILL_CATEGORIES = {
         "typescript",
         "c++",
         "c#",
+        "c",
         "go",
         "rust",
         "kotlin",
         "scala",
+        "matlab",
     },
     "frameworks": {
         "react",
@@ -47,6 +49,7 @@ SKILL_CATEGORIES = {
         "postgresql",
         "mysql",
         "mongodb",
+        "sql",
         "redis",
         "elasticsearch",
         "kafka",
@@ -66,6 +69,10 @@ SKILL_CATEGORIES = {
         "selenium",
         "cypress",
         "postman",
+    },
+    "frontend_basics": {
+        "html",
+        "css",
     },
 }
 

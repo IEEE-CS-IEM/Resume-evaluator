@@ -70,6 +70,60 @@ def _normalise_list(values: Optional[List[Any]]) -> List[str]:
     return result
 
 
+def _infer_role_title(jd_text: str) -> Optional[str]:
+    """
+    Attempt to infer a role title when the LLM summary fails to provide one.
+    The heuristic looks for lines that precede words like 'Responsibilities'
+    or resemble standard job title phrases.
+    """
+    def _clean_role_title(line: str) -> str:
+        trimmed = line.strip()
+        if " - " in trimmed:
+            left, right = trimmed.split(" - ", 1)
+            if not re.search(
+                r"(?i)\b(engineer|developer|designer|manager|analyst|scientist|specialist)\b",
+                right,
+            ):
+                return left.strip()
+        return trimmed
+
+    lines = [line.strip(" :-\u2022") for line in jd_text.splitlines()]
+    cleaned_lines = [line for line in lines if line.strip()]
+
+    for line in cleaned_lines:
+        if re.search(r"(?i)\bresponsibilities\b", line):
+            candidate = re.split(r"(?i)\bresponsibilities\b", line)[0].strip(" :-")
+            if candidate:
+                return _clean_role_title(candidate)
+
+    for line in cleaned_lines:
+        if re.search(r"(?i)\b(engineer|developer|designer|manager|analyst|scientist|specialist)\b", line):
+            return _clean_role_title(line)
+
+    return None
+
+
+def _infer_seniority(role_title: Optional[str], jd_text: str) -> str:
+    """
+    Infer seniority level based on the role title or JD text when the LLM
+    output does not provide one.
+    """
+    text_blob = " ".join(filter(None, [role_title, jd_text])).lower()
+    seniority_map = [
+        ("principal", ("principal", "distinguished")),
+        ("senior", ("senior", "lead", "staff")),
+        ("mid-level", ("mid level", "mid-level", "intermediate", "experienced")),
+        ("junior", ("junior", "associate")),
+        ("entry", ("entry level", "entry-level", "graduate", "university grad", "freshers", "new grad", "intern")),
+    ]
+
+    for label, keywords in seniority_map:
+        if any(keyword in text_blob for keyword in keywords):
+            return label
+
+    return "unspecified"
+
+
 def summarise_job_description(jd_text: str, temperature: float = 0.0) -> Dict[str, Any]:
     """
     Summarise a job description into structured data using the configured LLM.
@@ -123,12 +177,17 @@ def summarise_job_description(jd_text: str, temperature: float = 0.0) -> Dict[st
             }
         )
 
+    inferred_role = role_title or _infer_role_title(jd_text)
+    inferred_seniority = seniority
+    if not seniority or seniority == "unspecified":
+        inferred_seniority = _infer_seniority(inferred_role, jd_text)
+
     required_years = _derive_years(experience_requirement, jd_text)
 
     return {
         "raw_text": jd_text,
-        "role_title": role_title,
-        "seniority_level": seniority,
+        "role_title": inferred_role,
+        "seniority_level": inferred_seniority,
         "llm_summary": summary_text,
         "summary": summary_text,
         "skills": combined_skills,

@@ -30,12 +30,16 @@ jd_text ─────▶ jd_structured_summary ──────────�
 | `util/resume_summary_generator.py` | Calls the resume summarisation prompt via `MyAgent` and returns structured JSON (with fallbacks if parsing fails). |
 | `util/resume_summary_analyzer.py` | Merges LLM JSON with regex heuristics to extract skills, experience, knowledge signals, quantification gaps, and ATS score hints. |
 | `util/jd_structured_summary.py` | Uses an LLM prompt to capture JD metadata (role, skills, tooling, experience requirements) and post-processes results into canonical categories. |
-| `util/jd_resume_analyzer.py` | Deterministic matcher that aligns resume and JD signals, computing keyword coverage, experience alignment, knowledge alignment, category coverage, and blended ATS score. |
+| `util/jd_resume_analyzer.py` | Deterministic matcher that aligns resume and JD signals, computing keyword coverage, experience alignment, knowledge alignment, category coverage, and blended ATS score. Includes OCR fallback and LLM-based skill sanitisation. |
 | `util/fit_comparator.py` | Asks the LLM to craft a narrative fit report using structured resume, JD, and score data. |
 | `util/pipeline.py` | High-level orchestrator returning a dictionary with all intermediate artefacts (resume summary, resume signals, JD summary, scoring output, LLM fit report). |
 | `util/constants.py` | Stores skill taxonomies, knowledge keywords, scoring weights, and default model names. |
+| `util/keyword_extractor.py` | YAKE-powered keyword extraction that surfaces salient terms from noisy OCR text without relying on hard-coded skill lists. |
+| `util/skill_guard.py` | Reuses the LLM stack to validate and clean candidate skill lists before scoring. |
 | `docs/scoring.md` | Deep dive into the ATS scoring formula. |
 | `LLMTest.py` | Example script that runs the pipeline on sample text and saves the ATS evaluation (`testresult.json`). |
+| `api_server.py` | FastAPI service that persists uploaded PDF resumes and exposes evaluation routes built on the deterministic scorers. |
+| `pdfTest.py` | Convenience client that uploads a PDF and invokes the API using the sample Meta JD, mirroring a Postman workflow. |
 
 ## Stage 1 – Resume Summarisation
 
@@ -49,7 +53,7 @@ jd_text ─────▶ jd_structured_summary ──────────�
    - Parses the response via `coerce_json`, falling back to a template with sensible defaults if parsing fails.
 3. **Signal Normalisation**: `util/resume_summary_analyzer.analyze_resume_summary`
    - Accepts either the JSON payload or raw text.
-   - Uses shared skill taxonomies to map skills by category.
+   - Extracts candidate skills using a YAKE-based keyword extractor that thrives on OCR noise, sends them through an LLM guardrail, and finally asks a classifier LLM to bucket the deduplicated skills into canonical categories (preventing entries like personal names or marketing phrases while keeping niche tools such as Spline3D).
    - Detects years of experience, knowledge mentions (with levels + associated skills), quantification gaps, and captures LLM ATS scores if present.
    - Synthesises a heuristic ATS score when the LLM omits one so downstream scoring always receives a blended value.
 
@@ -61,6 +65,7 @@ jd_text ─────▶ jd_structured_summary ──────────�
    - Normalises skill lists, knowledge statements, and experience requirements.
    - Uses `util/constants.SKILL_CATEGORIES` to build category-wise skill maps.
    - Derives required experience band (entry → principal).
+   - Backfills missing role title or seniority with regex heuristics when the LLM response is incomplete.
 3. **Fallback Handling**:
    - If JSON parsing fails, returns a minimal structure using the raw JD text.
    - Combines `must_have`, `nice_to_have`, and `tooling` into a unified skills list for matching.
@@ -69,6 +74,7 @@ jd_text ─────▶ jd_structured_summary ──────────�
 
 1. **Keyword Scoring**: `util/jd_resume_analyzer.process_jd_and_resume`
    - Accepts JD structured summary (or raw text) and resume signals.
+   - Applies OCR (Tesseract) when PDFs lack selectable text, then runs YAKE + LLM sanitised keywords with boundary-aware matching to prevent hallucinated hits (e.g., avoids treating “SQL” as present when only “Sequel” appears).
    - Computes:
      - Skill coverage (matched vs missing skills)
      - Category coverage (e.g., programming languages, cloud, devops)
@@ -110,7 +116,7 @@ The example runner `LLMTest.py` saves `matching_evaluation` as `testresult.json`
   - `GEMINI_API_KEY` / `MISTRAL_API_KEY` (case insensitive)
   - Optional `GEMINI_MODEL` / `MISTRAL_MODEL`
 - Virtual env activation (`genai_env`) is expected before installing dependencies or running scripts.
-- `requirements.txt` keeps only the libraries required for Gemini/Mistral support and document parsing (`python-docx`, `pdfplumber`).
+- `requirements.txt` lists all runtime dependencies including the FastAPI stack (`fastapi`, `uvicorn`), OCR helpers (`pytesseract`, `Pillow`), and the optional client helper (`requests`). Install Tesseract binaries separately.
 
 ## Extending the System
 

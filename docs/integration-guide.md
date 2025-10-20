@@ -20,6 +20,7 @@ summary = generate_resume_summary(resume_text)
 - Requires an active virtual environment with API keys (`llm_provider=gemini` or `mistral`).
 - `summary` is a dictionary with keys such as `summary_text`, `core_skills`, `tooling`, `domain_experience`, `quantifiable_highlights`, `leadership_experience`, `total_years_experience`, `seniority`, `knowledge_statements`.
 - If the LLM response cannot be parsed, the function returns a fallback dictionary with empty lists and the raw text.
+- Salient skills are extracted downstream via `util.keyword_extractor` (YAKE), scrubbed with an LLM guard, and then classified by an LLM into canonical buckets so you always get clean, deduplicated categories.
 
 **Common use-cases**
 - UI teams: show the structured summary to users.
@@ -43,7 +44,7 @@ signals = analyze_resume_summary(resume_summary)
 - A plain string containing resume text (the analyzer will process it directly).
 
 **Output (`signals`)**
-- `skills`: sorted list of skills (lowercase, taxonomy aware).
+- `skills`: sorted list of skills (lowercase, taxonomy aware, boundary-checked so aliases like “go” are only matched when explicitly mentioned).
 - `skills_by_category`: dictionary of category → skills.
 - `years_experience`: float or `None`.
 - `experience_band`: entry/junior/mid-level/senior/principal/unknown.
@@ -81,6 +82,7 @@ jd_summary = summarise_job_description(jd_text)
 - `skills_by_category`: taxonomy-based categorization.
 - `required_years`, `required_experience_band`.
 - `raw_text` (original JD).
+- Heuristics fill in `role_title` or `seniority_level` when the LLM response omits them (e.g., “Software Engineer (University Grad)” → entry level).
 
 **Common use-cases**
 - HR tooling: store the structured JD alongside job postings.
@@ -105,7 +107,7 @@ evaluation = process_jd_and_resume(jd_text, resume_text)
 **Output (`evaluation`)**
 - `jd_insights`: structured JD info (skills, categories, experience band, knowledge).
 - `resume_insights`: structured resume data (skills, categories, experience, knowledge, quantification suggestions, llm score).
-- `matching_summary`: matched/missing skills, category breakdown, experience alignment (0-1), knowledge alignment (0-1), category coverage (0-1), experience relevance narration.
+- `matching_summary`: matched/missing skills, category breakdown, experience alignment (0-1), knowledge alignment (0-1), category coverage (0-1), experience relevance narration (all based on OCR-backed, LLM-sanitised keyword detection to eliminate substring hallucinations).
 - `scores`: keyword score, final ATS score, `llm_score_used` (always true because the analyzer guarantees a score), and subscores (skill coverage, experience alignment, knowledge alignment, category coverage).
 - `recommendations`: quantification suggestions, next skills to learn.
 
@@ -195,6 +197,32 @@ Before running any of the above:
 | Resume/JD parsing yields empty skills | Confirm text encoding, ensure taxonomy contains the skills you expect, or add new keywords to `util/constants.SKILL_CATEGORIES`. |
 | `final_ats_score` looks low | Inspect `subscores` to see which component (skill, experience, knowledge, category coverage) is responsible. |
 | Need faster responses | Reduce temperature (already set low), and make sure you are using the lightweight model variants (e.g., `gemini-1.5-flash`). |
+
+---
+
+## 10. REST API Endpoints
+
+The FastAPI service in `api_server.py` wraps the deterministic scoring workflow so you can drive the evaluator via HTTP (Postman friendly).
+
+| Method & Path | Purpose | Request Shape |
+| --- | --- | --- |
+| `POST /users/{user_id}/resume` | Upload and persist a PDF resume (Multer-style storage). | `multipart/form-data` with a `file` field containing the PDF. |
+| `POST /users/{user_id}/evaluate` | Run JD/resume comparison using the stored PDF. | JSON body `{ "jd_text": "optional JD; defaults to Meta sample" }`. |
+| `GET /health` | Lightweight readiness probe. | None. |
+
+Typical flow:
+
+1. Start the server: `uvicorn api_server:app --port 8000 --reload`
+2. Upload a resume via Postman or `pdfTest.py`:
+   - Postman → Body `form-data`, key `file`, type File.
+3. Trigger evaluation with the same `user_id`.
+4. Inspect the JSON response, which mirrors `process_jd_and_resume`.
+
+For automation, run:
+```
+python pdfTest.py --resume /path/to/resume.pdf --user-id demo123
+```
+The script hits both endpoints and saves `pdf_test_result.json` locally.
 
 ---
 
