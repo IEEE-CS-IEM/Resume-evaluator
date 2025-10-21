@@ -38,10 +38,11 @@ class MyAgent:
         model_name = (
             os.getenv("GEMINI_MODEL")
             or os.getenv("gemini_model")
-            or f"{constants.gemini_llm}-latest"
+            or constants.gemini_llm
         )
 
-        genai.configure(api_key=api_key)
+        # Force REST transport so newer models resolve correctly.
+        genai.configure(api_key=api_key, transport="rest")
         client = genai.GenerativeModel(
             model_name=model_name,
             system_instruction=self.system_prompt or None,

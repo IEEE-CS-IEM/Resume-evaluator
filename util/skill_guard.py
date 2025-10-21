@@ -8,6 +8,8 @@ from util.llm_helpers import coerce_json
 from util.simpleagent import MyAgent
 from util.system_prompt import prompt_skill_guard
 
+_MAX_SKILLS_FOR_LLM = 40  # Keeps LLM payload sizes manageable.
+
 
 @lru_cache(maxsize=1)
 def _get_agent() -> MyAgent:
@@ -137,7 +139,8 @@ def filter_skills_via_llm(skills: List[str]) -> List[str]:
             unique_skills.append(normalized)
             seen.add(normalized.lower())
 
-    filtered = _filter_tuple(tuple(unique_skills))
+    llm_candidates = unique_skills[:_MAX_SKILLS_FOR_LLM]
+    filtered = _filter_tuple(tuple(llm_candidates))
     filtered_set = set(filtered)
 
     recovered: List[str] = []
