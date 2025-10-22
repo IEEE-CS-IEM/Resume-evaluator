@@ -1,0 +1,18 @@
+langchain-mistralai                          # Integration of LangChain with MistralAI
+langchain-google-genai                       # Integration of LangChain with Google GenAI
+langchain-core>=0.2                          # Core LangChain library
+langchain-community                          # Community contributions to LangChain
+python-dotenv                                # For loading environment variables from a .env file
+python-docx                                  # Read DOC/DOCX job descriptions
+pdfplumber                                   # Read PDF job descriptions
+google-generativeai                          # Gemini API client
+fastapi                                      # REST API framework
+uvicorn[standard]                            # ASGI server for FastAPI
+requests                                     # Client helper for pdfTest
+yake                                         # Keyword extraction (dynamic skill detection)
+pytesseract                                  # OCR fallback for scanned PDFs
+Pillow                                       # Image processing for OCR
+sentence-transformers                        # BERT-based semantic parsing
+numpy                                        # Vector operations for embeddings
+mistralai                                    # Native SDK for Mistral OCR integration
+python-multipart

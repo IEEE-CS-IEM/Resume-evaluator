@@ -1,0 +1,9 @@
+.env
+util/.env
+genai_env/
+langchain_env/
+.venv/
+uploads/
+__pycache__/
+util/__pycache__/
+*.pyc
