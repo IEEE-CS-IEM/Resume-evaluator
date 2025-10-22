@@ -4,6 +4,8 @@ An AI-powered resume evaluation system that analyses candidate profiles against 
 Current version changes the setup from the previous one to test based on the simpleagent module. 
 LLMFactory is can also be used for the same. 
 
+This is the official repository of the IEEECS-IEM web dev project community.
+
 ## Author : SATABARTO SARKAR
 
 ##  Features
