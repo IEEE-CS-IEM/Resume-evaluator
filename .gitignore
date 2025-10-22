@@ -1,1 +1,3 @@
-.env
+.envgenai_env/
+util/.env
+genai_env/
