@@ -1,6 +1,7 @@
+import io
 import os
 import re
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import docx
 import pdfplumber
@@ -10,6 +11,7 @@ from util import constants
 from util.resume_summary_analyzer import analyze_resume_summary, _canonical_skill_key
 from util.keyword_extractor import extract_keywords
 from util.skill_guard import filter_skills_via_llm
+from util.mistral_ocr import ocr_image
 
 
 def extract_text_from_file(file_path: str) -> str:
@@ -26,6 +28,14 @@ def extract_text_from_file(file_path: str) -> str:
                     pil_image = page.to_image(resolution=300).original
                     if pil_image.mode not in ("RGB", "RGBA"):
                         pil_image = pil_image.convert("RGB")
+
+                    buffer = io.BytesIO()
+                    pil_image.save(buffer, format="PNG")
+                    mistral_text = ocr_image(buffer.getvalue())
+                    if mistral_text:
+                        pages_text.append(mistral_text)
+                        continue
+
                     ocr_text = pytesseract.image_to_string(pil_image)
                     if ocr_text.strip():
                         pages_text.append(ocr_text)
@@ -196,30 +206,41 @@ def _skill_overlap(
 
 
 def _category_overlap(
-    jd_categories: Dict[str, List[str]], resume_categories: Dict[str, List[str]]
+    jd_categories: Dict[str, List[str]],
+    resume_categories: Dict[str, List[str]],
+    resume_skills: List[str],
 ) -> Dict[str, Dict[str, List[str]]]:
+    resume_skill_keys = {
+        _canonical_skill_key(skill)
+        for skill in resume_skills
+        if isinstance(skill, str) and _canonical_skill_key(skill)
+    }
+    resume_category_keys: Dict[str, Set[str]] = {}
     breakdown: Dict[str, Dict[str, List[str]]] = {}
+    for category, items in resume_categories.items():
+        resume_category_keys[category] = {
+            _canonical_skill_key(item)
+            for item in items
+            if isinstance(item, str) and _canonical_skill_key(item)
+        }
     for category, jd_items in jd_categories.items():
-        resume_items = {
-            _canonical_skill_key(item)
-            for item in resume_categories.get(category, [])
-            if isinstance(item, str) and _canonical_skill_key(item)
-        }
-        jd_items_set = {
-            _canonical_skill_key(item)
-            for item in jd_items
-            if isinstance(item, str) and _canonical_skill_key(item)
-        }
+        category_keys = resume_category_keys.get(category, set())
         breakdown[category] = {
             "matched": sorted(
                 item
                 for item in jd_items
-                if _canonical_skill_key(item) in resume_items
+                if _canonical_skill_key(item)
+                and (
+                    _canonical_skill_key(item) in category_keys
+                    or _canonical_skill_key(item) in resume_skill_keys
+                )
             ),
             "missing": sorted(
                 item
                 for item in jd_items
-                if _canonical_skill_key(item) not in resume_items
+                if _canonical_skill_key(item)
+                and _canonical_skill_key(item) not in category_keys
+                and _canonical_skill_key(item) not in resume_skill_keys
             ),
         }
     return breakdown
@@ -422,6 +443,7 @@ def process_jd_and_resume(
     category_breakdown = _category_overlap(
         jd_struct["skills_by_category"],
         resume_struct.get("skills_by_category", {}),
+        resume_struct.get("skills", []),
     )
     if jd_struct["skills_by_category"]:
         matched_categories = sum(

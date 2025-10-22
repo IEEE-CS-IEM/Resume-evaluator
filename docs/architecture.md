@@ -24,12 +24,12 @@ jd_text ─────▶ jd_structured_summary ──────────�
 
 | Module | Purpose |
 | --- | --- |
-| `util/system_prompt.py` | Houses system prompts for the resume summariser, JD summariser, fit evaluation, and legacy combined prompt. |
-| `util/simpleagent.py` | Provider-agnostic LLM wrapper supporting Gemini and Mistral. Handles API key configuration, model selection, and temperature control. |
+| `util/system_prompt.py` | Houses system prompts for the resume summariser, JD summariser, JD role keyword extractor, fit evaluation, and legacy combined prompt. |
+| `util/simpleagent.py` | Provider-agnostic LLM wrapper supporting Gemini and Mistral with provider/model fallbacks and rate-limit aware retry/backoff handling. |
 | `util/llm_helpers.py` | Normalises LLM responses into plain text or JSON (`coerce_text`, `coerce_json`). |
 | `util/resume_summary_generator.py` | Calls the resume summarisation prompt via `MyAgent` and returns structured JSON (with fallbacks if parsing fails). |
 | `util/resume_summary_analyzer.py` | Merges LLM JSON with regex heuristics to extract skills, experience, knowledge signals, quantification gaps, and ATS score hints. |
-| `util/jd_structured_summary.py` | Uses an LLM prompt to capture JD metadata (role, skills, tooling, experience requirements) and post-processes results into canonical categories. |
+| `util/jd_structured_summary.py` | Uses LLM prompts to capture JD metadata (role, role keywords, skills, tooling, experience requirements) and post-processes results into canonical categories. |
 | `util/jd_resume_analyzer.py` | Deterministic matcher that aligns resume and JD signals, computing keyword coverage, experience alignment, knowledge alignment, category coverage, and blended ATS score. Includes OCR fallback and LLM-based skill sanitisation. |
 | `util/fit_comparator.py` | Asks the LLM to craft a narrative fit report using structured resume, JD, and score data. |
 | `util/pipeline.py` | High-level orchestrator returning a dictionary with all intermediate artefacts (resume summary, resume signals, JD summary, scoring output, LLM fit report). |
@@ -65,8 +65,9 @@ jd_text ─────▶ jd_structured_summary ──────────�
    - Normalises skill lists, knowledge statements, and experience requirements.
    - Uses `util/constants.SKILL_CATEGORIES` to build category-wise skill maps.
    - Derives required experience band (entry → principal).
-   - Backfills missing role title or seniority with regex heuristics when the LLM response is incomplete.
+   - Backfills missing role title by querying a dedicated role keyword prompt and scanning JD headings, then derives seniority from the resolved title when needed.
 3. **Fallback Handling**:
+   - Calls a dedicated role keyword prompt when the primary title lookup fails, then scans the JD for lines containing those keywords (no static keyword list required).
    - If JSON parsing fails, returns a minimal structure using the raw JD text.
    - Combines `must_have`, `nice_to_have`, and `tooling` into a unified skills list for matching.
 

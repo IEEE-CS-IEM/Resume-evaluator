@@ -12,3 +12,7 @@ requests                                     # Client helper for pdfTest
 yake                                         # Keyword extraction (dynamic skill detection)
 pytesseract                                  # OCR fallback for scanned PDFs
 Pillow                                       # Image processing for OCR
+sentence-transformers                        # BERT-based semantic parsing
+numpy                                        # Vector operations for embeddings
+mistralai                                    # Native SDK for Mistral OCR integration
+python-multipart

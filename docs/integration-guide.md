@@ -82,7 +82,7 @@ jd_summary = summarise_job_description(jd_text)
 - `skills_by_category`: taxonomy-based categorization.
 - `required_years`, `required_experience_band`.
 - `raw_text` (original JD).
-- Heuristics fill in `role_title` or `seniority_level` when the LLM response omits them (e.g., “Software Engineer (University Grad)” → entry level).
+- If the primary title call fails, a separate role-keyword prompt is used to locate the correct heading before inferring `seniority_level` from that title (e.g., “Software Engineer (University Grad)” → entry level).
 
 **Common use-cases**
 - HR tooling: store the structured JD alongside job postings.

@@ -19,7 +19,8 @@ from typing import Optional
 from fastapi import Body, FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
-from util.jd_resume_analyzer import extract_text_from_file, process_jd_and_resume
+from util.jd_resume_analyzer import extract_text_from_file
+from util.pipeline import evaluate_resume_against_jd
 
 UPLOAD_ROOT = Path(__file__).resolve().parent / "uploads"
 UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
@@ -118,7 +119,7 @@ def evaluate_resume(
         ) from exc
 
     jd_source = jd_text.strip() if jd_text and jd_text.strip() else DEFAULT_JD_TEXT
-    evaluation = process_jd_and_resume(jd_source, resume_text)
+    evaluation = evaluate_resume_against_jd(resume_text, jd_source)
 
     return JSONResponse(evaluation)
 

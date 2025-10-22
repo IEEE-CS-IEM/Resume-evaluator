@@ -40,6 +40,7 @@ You are a hiring manager extracting structured signals from a job description fo
 A raw job description.
 
 ### Instructions
+- Identify the role title exactly as it appears (e.g., "Core Engineering Intern"). Prefer explicit headings or lines such as “Role/Title/Position” and avoid summarising sentences.
 - Identify the role title, team/domain, and seniority expectations.
 - Extract must-have skills, nice-to-have skills, and tool/technology mentions.
 - Summarise the core responsibilities and impact expectations.
@@ -140,12 +141,131 @@ Respond strictly in the following JSON format:
 
 
 prompt_skill_guard = """
-You are a meticulous ATS data cleaner. Given a JSON payload containing a list of candidate skill tokens, return only the genuine technical skills, programming languages, tools, frameworks, or domain keywords. Remove personal names, locations, company names, generic verbs, and filler phrases.
+You are an ATS skill gatekeeper. For every token in the input list you must decide whether it is a genuine technical capability.
 
-Respond strictly in JSON:
+### Genuine skill examples
+- Programming languages: Python, C++, Rust, Go, C, R
+- Frameworks / libraries: React, TensorFlow, Spring Boot
+- Tools / platforms / services: AWS, Kubernetes, Docker, Jenkins
+- Specific domain keywords: quantitative trading, computer vision
+
+### Non-skill examples
+- Company names, product slogans, benefits, compensation statements
+- Generic verbs or adjectives (e.g., "build", "passionate", "strong")
+- Role descriptors or seniority words (e.g., "intern", "engineer")
+- Education phrases (e.g., "computer science", "university graduate")
+- Multi-word marketing phrases (e.g., "pushing the boundaries")
+
+### Input JSON
 {
-  "skills": ["skill one", "skill two", "..."]
+  "skills": ["token one", "token two", "..."]
 }
+
+### Instructions
+- Produce an entry for every token in the same order.
+- Only mark `is_skill` as true when the token clearly names a specific technical skill, language, framework, library, tool, platform, or rigorous domain keyword.
+- Mark `is_skill` as false for tokens that are people, companies, soft skills, verbs, adjectives, benefits, generic phrases, or anything that is not a concrete technical capability.
+- Preserve the original casing in `value`.
+
+### Output JSON
+{
+  "skills": [
+    {"value": "token one", "is_skill": true|false},
+    {"value": "token two", "is_skill": true|false},
+    ...
+  ]
+}
+
+Do not include explanations or extra fields.
+"""
+
+prompt_jd_role = """
+You extract the exact role title from a job description.
+
+### Input JSON
+{
+  "job_description": "<raw JD text>"
+}
+
+### Instructions
+- Locate the primary job title exactly as it appears (e.g., "Machine Learning Intern").
+- Prefer explicit headings or lines that clearly state the position.
+- Return null when a definitive title cannot be found.
+- Do NOT invent or modify words.
+
+### Output JSON
+{
+  "role_title": "exact title or null"
+}
+"""
+
+
+prompt_jd_role_keywords = """
+You extract job title keywords that appear in a job description.
+
+### Input JSON
+{
+  "job_description": "<raw JD text>"
+}
+
+### Instructions
+- Identify individual words or short phrases (<= 3 words) that explicitly describe the role (e.g., "intern", "software engineer", "data scientist").
+- Only include tokens that appear verbatim in the job description.
+- Lowercase every keyword.
+- Remove duplicates while preserving the order of first appearance.
+- Return an empty array when you cannot identify any such keywords.
+
+### Output JSON
+{
+  "role_keywords": ["intern", "software engineer"]
+}
+"""
+
+prompt_jd_seniority = """
+You identify the seniority level implied by a job description.
+
+### Levels
+entry, junior, mid-level, senior, principal, mixed, unspecified
+
+### Input JSON
+{
+  "job_description": "<raw JD text>",
+  "role_title": "<title or null>"
+}
+
+### Instructions
+- Base your decision on the role being advertised, not on references to other teams or management (e.g., ignore phrases like "learn from senior management").
+- Inspect both the title and the body for cues ("intern", "graduate", "senior", "principal", etc.).
+- Return the level from the list above.
+- Use "mixed" only if multiple distinct levels are clearly targeted.
+- Use "unspecified" when no clear signal exists.
+
+### Output JSON
+{
+  "seniority_level": "entry|junior|mid-level|senior|principal|mixed|unspecified"
+}
+"""
+
+
+prompt_jd_domains = """
+You list the industry or domain focus areas mentioned in a job description.
+
+### Input JSON
+{
+  "job_description": "<raw JD text>"
+}
+
+### Instructions
+- Return distinct industry, market, or application domains explicitly referenced (e.g., "quantitative trading", "healthcare", "e-commerce").
+- Exclude company slogans, benefits, generic adjectives, or role responsibilities.
+- Preserve the original casing in each domain string.
+
+### Output JSON
+{
+  "domains": ["domain one", "domain two", ...]
+}
+
+If no clear domains are stated, return an empty list.
 """
 
 

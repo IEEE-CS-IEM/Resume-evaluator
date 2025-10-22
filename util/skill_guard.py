@@ -1,14 +1,17 @@
 import json
-import re
 from functools import lru_cache
-from typing import List, Set
+from typing import Dict, Iterable, List, Sequence, Tuple
 
-from util import constants
 from util.llm_helpers import coerce_json
-from util.simpleagent import MyAgent
+from util.simpleagent import MyAgent, ProviderCapacityError
 from util.system_prompt import prompt_skill_guard
 
-_MAX_SKILLS_FOR_LLM = 40  # Keeps LLM payload sizes manageable.
+_MAX_CHUNK_SIZE = 20
+
+
+def _chunk_sequence(sequence: Sequence[str], size: int) -> Iterable[Tuple[str, ...]]:
+    for index in range(0, len(sequence), size):
+        yield tuple(sequence[index : index + size])
 
 
 @lru_cache(maxsize=1)
@@ -16,149 +19,112 @@ def _get_agent() -> MyAgent:
     return MyAgent(system_prompt=prompt_skill_guard)
 
 
-@lru_cache(maxsize=256)
-def _filter_tuple(skills_tuple: tuple[str, ...]) -> tuple[str, ...]:
+def _extract_positive_skills(
+    skills_tuple: Tuple[str, ...], parsed_response
+) -> Tuple[str, ...]:
+    if not skills_tuple:
+        return ()
+
+    positive_keys = set()
+
+    def _normalise(value: str) -> str:
+        return value.strip().lower()
+
+    if isinstance(parsed_response, dict):
+        skills_block = parsed_response.get("skills")
+        if isinstance(skills_block, list):
+            for entry in skills_block:
+                if isinstance(entry, dict):
+                    raw_value = (
+                        entry.get("value")
+                        or entry.get("skill")
+                        or entry.get("name")
+                        or entry.get("text")
+                    )
+                    if isinstance(raw_value, str):
+                        value = _normalise(raw_value)
+                        flag = entry.get("is_skill")
+                        if isinstance(flag, bool):
+                            if flag:
+                                positive_keys.add(value)
+                        elif flag is None:
+                            positive_keys.add(value)
+                elif isinstance(entry, str):
+                    positive_keys.add(_normalise(entry))
+        elif isinstance(skills_block, dict):
+            for raw_value, flag in skills_block.items():
+                value = _normalise(str(raw_value))
+                if isinstance(flag, bool):
+                    if flag:
+                        positive_keys.add(value)
+                else:
+                    positive_keys.add(value)
+    elif isinstance(parsed_response, list):
+        for entry in parsed_response:
+            if isinstance(entry, str):
+                positive_keys.add(_normalise(entry))
+
+    if not positive_keys:
+        return skills_tuple
+
+    ordered: List[str] = []
+    seen = set()
+    for original in skills_tuple:
+        lowered = _normalise(original)
+        if lowered in positive_keys and lowered not in seen:
+            ordered.append(original)
+            seen.add(lowered)
+    return tuple(ordered)
+
+
+@lru_cache(maxsize=512)
+def _filter_chunk(skills_tuple: Tuple[str, ...]) -> Tuple[str, ...]:
     if not skills_tuple:
         return ()
 
     agent = _get_agent()
     payload = {"skills": list(skills_tuple)}
-    response = agent(message=json.dumps(payload), temperature=0.0)
-    parsed, raw_text = coerce_json(response)
+    try:
+        response = agent(message=json.dumps(payload), temperature=0.0)
+    except ProviderCapacityError:
+        return ()
 
-    if isinstance(parsed, dict):
-        cleaned = parsed.get("skills")
-        if isinstance(cleaned, list):
-            return tuple(str(item).strip() for item in cleaned if str(item).strip())
-    return skills_tuple
-
-
-def _flatten_taxonomy() -> Set[str]:
-    flattened: Set[str] = set()
-    for keywords in constants.SKILL_CATEGORIES.values():
-        for keyword in keywords:
-            flattened.add(keyword.lower())
-    return flattened
-
-
-_TAXONOMY_CACHE = _flatten_taxonomy()
-_LOCATION_TERMS = {
-    "india",
-    "bengaluru",
-    "bangalore",
-    "kolkata",
-    "delhi",
-    "west",
-    "bengal",
-    "usa",
-    "london",
-    "remote",
-}
-_GENERIC_TERMS = {
-    "developer",
-    "development",
-    "applications",
-    "application",
-    "team",
-    "teams",
-    "project",
-    "projects",
-    "experience",
-    "customers",
-    "users",
-    "solutions",
-    "building",
-    "cutting-edge",
-    "cutting",
-    "edge",
-    "mobile",
-    "devices",
-    "mission",
-    "impact",
-    "growth",
-}
-
-_TECH_KEYWORDS = {
-    "spline",
-    "spline3d",
-    "framer",
-    "framer motion",
-    "vercel",
-    "netlify",
-    "firebase",
-    "huggingface",
-    "hugging",
-    "cloudflare",
-    "gcp",
-    "google cloud",
-    "rag",
-    "retrieval",
-    "augmented",
-}
-
-
-def _looks_like_location(skill: str) -> bool:
-    tokens = [token.lower() for token in re.split(r"[^\w]+", skill) if token]
-    return any(token in _LOCATION_TERMS for token in tokens)
-
-
-def _looks_generic(skill: str) -> bool:
-    tokens = [token.lower() for token in re.split(r"[^\w]+", skill) if token]
-    return all(token in _GENERIC_TERMS or len(token) <= 2 for token in tokens)
-
-
-def _is_technical_hint(skill: str) -> bool:
-    lower = skill.lower()
-    if lower in _TAXONOMY_CACHE:
-        return True
-    tokens = [token.lower() for token in re.split(r"[^\w]+", lower) if token]
-    if any(token in _TAXONOMY_CACHE for token in tokens):
-        return True
-    if any(token in _TECH_KEYWORDS for token in tokens):
-        return True
-    if re.search(r"\b(api|cloud|framework|studio|platform|pipeline|dataset|ml|ai|model|analytics|sql|devops|testing|design|render|3d)\b", lower):
-        return True
-    if re.search(r"\d", skill):
-        return True
-    if any(symbol in skill for symbol in ("/", "-", "(", ")", "+", "#")):
-        return True
-    if lower.endswith(("js", "sql")):
-        return True
-    return False
+    parsed, _raw = coerce_json(response)
+    return _extract_positive_skills(skills_tuple, parsed)
 
 
 def filter_skills_via_llm(skills: List[str]) -> List[str]:
+    """
+    Use the configured LLM to label each token as a true technical skill or not.
+    The model receives explicit yes/no instructions and only approved tokens are retained.
+    """
     if not skills:
         return []
 
-    unique_skills = []
+    unique: List[str] = []
     seen = set()
     for skill in skills:
         normalized = skill.strip()
-        if normalized and normalized.lower() not in seen:
-            unique_skills.append(normalized)
-            seen.add(normalized.lower())
-
-    llm_candidates = unique_skills[:_MAX_SKILLS_FOR_LLM]
-    filtered = _filter_tuple(tuple(llm_candidates))
-    filtered_set = set(filtered)
-
-    recovered: List[str] = []
-    for skill in unique_skills:
-        if skill in filtered_set:
-            recovered.append(skill)
+        if not normalized:
             continue
-        if _looks_like_location(skill) or _looks_generic(skill):
-            continue
-        if _is_technical_hint(skill):
-            recovered.append(skill)
+        lowered = normalized.lower()
+        if lowered not in seen:
+            unique.append(normalized)
+            seen.add(lowered)
+
+    if not unique:
+        return []
+
+    filtered: List[str] = []
+    for chunk in _chunk_sequence(tuple(unique), _MAX_CHUNK_SIZE):
+        filtered.extend(_filter_chunk(chunk))
 
     deduped: List[str] = []
-    seen_final = set()
-    combined_sequence = list(filtered) + recovered
-    for skill in combined_sequence:
-        if skill and skill.lower() not in seen_final:
-            deduped.append(skill)
-            seen_final.add(skill.lower())
+    final_seen = set()
+    for item in filtered:
+        lowered = item.lower()
+        if lowered not in final_seen:
+            final_seen.add(lowered)
+            deduped.append(item)
 
     return deduped

@@ -15,6 +15,7 @@ LLMFactory is can also be used for the same.
 - **LLM Guardrails**: Every candidate skill list runs through clean-up and classification LLMs to drop noise and bucket skills intelligently
 - **OCR Ready**: Automatically falls back to Tesseract OCR for scanned PDFs so text extraction never silently fails
 - **Keyword + LLM Scoring**: Blends objective keyword alignment with LLM readiness scores, with a deterministic fallback when the model omits one
+- **LLM-Based Role Recovery**: When the JD prompt omits a title, a secondary LLM extracts role keywords so headings are resolved without relying on static word lists
 - **Modular Architecture**: Clean separation of concerns with utility modules
 - **REST API Ready**: FastAPI service for PDF uploads and evaluation with Postman-friendly routes
 - **Environment Management**: Secure API key management with environment variables
@@ -73,24 +74,24 @@ LLM-RESUME_EVALUATOR/
    ```
 
 2. **Create and activate virtual environment**
-   
-   For GenAI environment:
+
+   macOS/Linux:
+   ```bash
+   python3 -m venv resume_Evaluator/genai_env
+   source resume_Evaluator/genai_env/bin/activate
+   ```
+
+   Windows (PowerShell):
    ```powershell
-   # Using PowerShell
    .\activate_genai.ps1
-   
-   # Using Command Prompt
-   .\activate_genai.bat
    ```
-   
-   For LangChain environment:
-   ```powershell
-   # Using PowerShell
-   .\activate_langchain.ps1
-   
-   # Using Command Prompt
-   .\activate_langchain.bat
+
+   Windows (Command Prompt):
+   ```cmd
+   activate_genai.bat
    ```
+
+   > Optional: equivalent scripts exist for the `langchain_env` if you need the LangChain example stack.
 
 3. **Install dependencies**
    ```bash
@@ -114,7 +115,7 @@ LLM-RESUME_EVALUATOR/
 
 Run the main application:
 ```bash
-python LLMTest.py
+python resume_Evaluator/LLMTest.py
 ```
 
 The application will prompt you for:
@@ -191,7 +192,12 @@ The system returns a structured JSON evaluation:
 | `mistral_api_key` | Mistral AI API key | Yes (for Mistral) |
 | `gemini_api_key` | Alternative Gemini key format | Yes (for Gemini) |
 | `llm_provider` | Active LLM provider (`gemini`/`mistral`) | Yes |
+| `llm_provider_fallbacks` | Comma-separated backup providers (e.g., `gemini,local`) | Optional |
 | `local_model_url` | Ollama server URL | Optional |
+| `MISTRAL_MODEL_FALLBACKS` | Comma-separated list of backup Mistral models | Optional |
+| `MISTRAL_RETRY_BACKOFF_SECONDS` | Base sleep before retrying (default `1.5`) | Optional |
+| `MISTRAL_MAX_RETRIES` | Attempts per model before switching (default `3`) | Optional |
+| `MISTRAL_RETRY_MULTIPLIER` | Exponential backoff multiplier (default `2.0`) | Optional |
 
 ### Model Configuration
 
@@ -219,6 +225,7 @@ Modify `util/system_prompt.py` to adjust:
 - Output format
 - Assessment categories
 - Readiness levels
+- Role keyword extraction behaviour (`prompt_jd_role_keywords`) for JD fallback logic
 
 ##  Dependencies
 

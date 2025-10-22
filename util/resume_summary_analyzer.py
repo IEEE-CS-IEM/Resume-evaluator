@@ -347,7 +347,6 @@ def analyze_resume_summary(summary_payload: Any) -> Dict[str, object]:
         llm_score_available = True
 
     return {
-        "raw_summary": summary_text,
         "skills": skills_list,
         "skills_by_category": skills_by_category,
         "years_experience": years_of_experience,

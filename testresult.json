@@ -1,340 +1,223 @@
 {
   "jd_insights": {
-    "role_title": "software engineer (university grad)",
+    "role_title": "Software Engineer (University Grad) - Bangalore",
     "seniority_level": "entry",
-    "summary": "Meta seeks entry-level software engineers to join its Bangalore team, focusing on building and improving global-scale products (e.g., mobile/web apps) that connect billions. The role emphasizes solving complex technical problems, writing high-quality code, and growing expertise in Meta’s development standards while contributing to impactful projects in social technology and immersive experiences.",
+    "summary": "As a member of our team, you will have the opportunity to work on complex technical problems, build new features, and improve existing products across various platforms, including mobile devices and web applications. Software Engineer (University Grad) - Bangalore Responsibilities: Work independently, use available resources to get unblocked, and complete tasks on-schedule by exercising strong judgement and problem solving skills Preferred Qualifications: Individual compensation is determined by skills, qualifications, experience, and location.",
     "domains": [
-      "social technology",
-      "mobile applications",
-      "web applications",
-      "augmented reality (AR)",
-      "virtual reality (VR)",
-      "global-scale systems",
-      "user experience (UX)"
+      "Social Technology",
+      "Augmented Reality",
+      "Virtual Reality"
     ],
     "required_skills": [
-      "C++",
-      "Java",
-      "JavaScript",
-      "Python",
-      "adhering to development standards (dev-to-release lifecycle)",
-      "applying judgement to unblock tasks",
-      "data analysis",
-      "giving/receiving feedback",
-      "modern abstractions/frameworks",
-      "prior software engineering experience (internships, work, competitions, or publications)",
-      "problem solving",
-      "programming",
-      "software engineering",
-      "working independently",
-      "writing high-quality code with test coverage"
+      "go",
+      "c",
+      "javascript",
+      "c++",
+      "python",
+      "java"
     ],
     "skills_by_category": {
       "programming_languages": [
-        "C++",
-        "Java",
-        "JavaScript",
-        "Python"
+        "c",
+        "c++",
+        "go",
+        "java",
+        "javascript",
+        "python"
       ]
     },
-    "required_years": 0.0,
-    "experience_band": "entry",
+    "required_years": null,
+    "experience_band": "unspecified",
     "knowledge_requirements": [
       {
-        "text": "Develop a strong understanding of relevant product area, codebase, and/or systems",
-        "skills": [
-          "c"
-        ],
-        "categories": {
-          "programming_languages": [
-            "c"
-          ]
-        }
+        "text": "Our teams are constantly pushing the boundaries of user experience, and we're looking for passionate individuals who can help us advance the way people connect globally.",
+        "skills": [],
+        "categories": {}
       },
       {
-        "text": "Master Meta’s development standards from developing to releasing code in order to take on tasks and projects with increasing levels of complexity",
-        "skills": [
-          "c"
-        ],
-        "categories": {
-          "programming_languages": [
-            "c"
-          ]
-        }
+        "text": "Develop a strong understanding of relevant product area, codebase, and/or systems",
+        "skills": [],
+        "categories": {}
+      },
+      {
+        "text": "Experience coding in an industry-standard language (e.g.",
+        "skills": [],
+        "categories": {}
+      },
+      {
+        "text": "Demonstrated software engineering experience from previous internship, work experience, coding competitions, or publications",
+        "skills": [],
+        "categories": {}
       }
     ]
   },
   "resume_insights": {
     "skills": [
-      "authentication/authorization (OAuth2, JWT)",
-      "AWS",
-      "cloud-native",
-      "cloud-native development",
-      "concurrency control",
-      "contributions to open-source",
-      "data processing (etl, ocr)",
-      "Docker",
-      "e-commerce (marketplace prototypes)",
+      "airflow",
+      "aws",
+      "aws codepipeline",
+      "c",
+      "data etl",
+      "data structures",
+      "docker",
       "elasticsearch",
-      "ETL pipelines",
-      "fintech (payments, fraud detection)",
-      "Flask",
-      "full-stack",
-      "full-stack development",
-      "Full-stack software",
-      "Full-stack software engineer",
-      "GCP",
-      "Java",
-      "JavaScript (ES6+)",
-      "Jenkins",
-      "Kubernetes",
-      "latency reduction",
-      "machine learning (ML)",
-      "microservices",
-      "microservices architecture",
-      "ML-integrated",
-      "ML-integrated systems",
-      "Node.js",
-      "open-source",
-      "open-source and side",
-      "optimization",
-      "performance optimization",
-      "pipelines",
+      "etl",
+      "flask",
+      "gcp",
+      "go",
+      "java",
+      "java spring",
+      "java spring boot",
+      "javascript",
+      "jenkins",
+      "kubernetes",
+      "node.js",
+      "order matching system",
       "postman",
-      "Python",
-      "React",
-      "real-time systems (order matching)",
+      "python",
+      "react",
       "redis",
-      "RESTful API design",
-      "scalable backend architectures",
+      "scala",
       "scikit-learn",
-      "Spring Boot",
-      "SQL",
-      "tensorflow",
-      "throughput"
+      "spring",
+      "spring boot",
+      "sql",
+      "tensorflow"
     ],
     "skills_by_category": {
       "programming_languages": [
-        "Java",
-        "JavaScript (ES6+)",
-        "Python"
-      ],
-      "frameworks": [
-        "Flask",
-        "Node.js",
-        "React",
-        "Spring Boot"
+        "c",
+        "java",
+        "scala"
       ],
       "libraries_packages": [
-        "scikit-learn",
-        "tensorflow"
+        "etl",
+        "flask",
+        "javascript",
+        "node.js",
+        "python"
       ],
       "cloud_platforms": [
-        "AWS",
-        "GCP"
-      ],
-      "developer_tools": [
-        "Docker",
-        "Jenkins",
-        "Postman",
-        "Kubernetes"
+        "aws",
+        "docker",
+        "gcp",
+        "kubernetes"
       ],
       "ml_ai_tools": [
-        "machine learning (ML)",
-        "ML-integrated",
-        "ML-integrated systems",
+        "redis",
         "scikit-learn",
         "tensorflow"
       ],
       "devops_infra": [
-        "AWS",
-        "cloud-native",
-        "cloud-native development",
-        "Docker",
-        "ETL pipelines",
-        "Jenkins",
-        "Kubernetes",
-        "microservices",
-        "microservices architecture",
-        "pipelines",
-        "scalable backend architectures"
+        "aws codepipeline",
+        "jenkins"
       ],
       "databases": [
-        "elasticsearch",
-        "redis",
-        "SQL"
+        "data etl",
+        "data structures",
+        "sql"
       ],
       "frontend_tooling": [
-        "JavaScript (ES6+)",
-        "React"
+        "react"
       ],
       "other": [
-        "authentication/authorization (OAuth2, JWT)",
-        "concurrency control",
-        "contributions to open-source",
-        "data processing (etl, ocr)",
-        "e-commerce (marketplace prototypes)",
-        "fintech (payments, fraud detection)",
-        "full-stack",
-        "full-stack development",
-        "Full-stack software",
-        "Full-stack software engineer",
-        "latency reduction",
-        "open-source",
-        "open-source and side",
-        "optimization",
-        "performance optimization",
-        "real-time systems (order matching)",
-        "RESTful API design",
-        "throughput"
+        "airflow",
+        "elasticsearch",
+        "go",
+        "java spring",
+        "java spring boot",
+        "order matching system",
+        "postman",
+        "spring",
+        "spring boot"
       ]
     },
-    "years_experience": 4.5,
+    "years_experience": 4.0,
     "experience_band": "mid-level",
     "knowledge_mentions": [
       {
         "level": "unspecified",
-        "excerpt": "Designed CI/CD pipelines using Jenkins + AWS CodePipeline for zero-downtime deployments.",
+        "excerpt": "EXPERIENCE",
+        "skills": []
+      },
+      {
+        "level": "unspecified",
+        "excerpt": "EDUCATION",
+        "skills": []
+      },
+      {
+        "level": "unspecified",
+        "excerpt": "Techno Institute of Engineering, Kolkata                        2014 - 2018",
         "skills": [
-          "AWS",
-          "AWS CodePipeline",
-          "CI/CD Pipelines",
-          "CodePipeline for zero-downtime",
-          "Jenkins",
-          "pipelines using Jenkins",
-          "zero-downtime",
-          "Zero-Downtime Deployment",
-          "zero-downtime deployments"
+          "Institute of Engineering"
         ]
       },
       {
         "level": "unspecified",
-        "excerpt": "Implemented concurrency control in Java for high-frequency order matching systems (Redis-backed).",
-        "skills": [
-          "concurrency",
-          "concurrency control",
-          "control in Java",
-          "high-frequency",
-          "high-frequency order",
-          "high-frequency order matching",
-          "high-frequency trading",
-          "Java",
-          "Java for high-frequency",
-          "matching systems",
-          "order matching",
-          "Redis",
-          "Redis-backed"
-        ]
+        "excerpt": "SKILLS",
+        "skills": []
       },
       {
         "level": "unspecified",
-        "excerpt": "Optimized TensorFlow models for production inference with batching and quantization techniques.",
-        "skills": [
-          "Batching",
-          "Model Inference",
-          "Model Optimization",
-          "Model Quantization",
-          "Optimized TensorFlow models",
-          "Production Deployment",
-          "Quantization Techniques",
-          "TensorFlow",
-          "TensorFlow models"
-        ]
+        "excerpt": "CERTIFICATIONS",
+        "skills": []
       },
       {
         "level": "unspecified",
-        "excerpt": "Architected Airflow DAGs for incremental data processing with fault tolerance.",
-        "skills": [
-          "DAGs",
-          "data processing",
-          "fault tolerance",
-          "incremental data processing"
-        ]
-      },
-      {
-        "level": "unspecified",
-        "excerpt": "Applied OAuth2/JWT for stateless authentication in Spring Boot microservices.",
-        "skills": [
-          "JWT",
-          "microservices",
-          "Spring Boot",
-          "stateless authentication"
-        ]
+        "excerpt": "PERSONAL",
+        "skills": []
       }
     ],
-    "quantification_suggestions": [
-      "Specify the scale of the payments platform (e.g., transactions/second or users supported).",
-      "Clarify the volume of invoices processed by the OCR pipeline (e.g., daily/monthly).",
-      "Add metrics for the Hackathon prototype (e.g., user load tested, features implemented).",
-      "Quantify the impact of React optimizations (e.g., page load time reduction in ms).",
-      "Include team size or scope for the ETL runtime improvement (e.g., data volume processed)."
-    ],
-    "llm_score": 85.0,
+    "quantification_suggestions": [],
+    "llm_score": 89.0,
     "llm_score_available": true
   },
   "matching_summary": {
     "matched_skills": [
-      "Java",
-      "JavaScript",
-      "Python"
+      "c",
+      "go",
+      "java",
+      "javascript",
+      "python"
     ],
     "missing_skills": [
-      "adhering to development standards (dev-to-release lifecycle)",
-      "applying judgement to unblock tasks",
-      "C++",
-      "data analysis",
-      "giving/receiving feedback",
-      "modern abstractions/frameworks",
-      "prior software engineering experience (internships, work, competitions, or publications)",
-      "problem solving",
-      "programming",
-      "software engineering",
-      "working independently",
-      "writing high-quality code with test coverage"
+      "c++"
     ],
     "category_breakdown": {
       "programming_languages": {
         "matched": [
-          "Java",
-          "JavaScript",
-          "Python"
+          "c",
+          "go",
+          "java",
+          "javascript",
+          "python"
         ],
         "missing": [
-          "C++"
+          "c++"
         ]
       }
     },
-    "experience_alignment": 1.0,
+    "experience_alignment": 0.5,
     "knowledge_alignment": 0.2,
     "category_coverage": 1.0,
-    "experience_relevance": "Experience exceeds requirement by approximately 4.5 years."
+    "experience_relevance": "Job description does not specify required years; candidate reports ~4.0 years."
   },
   "scores": {
-    "keyword_score": 52.0,
-    "llm_score": 85.0,
+    "keyword_score": 65.5,
+    "llm_score": 89.0,
     "llm_score_used": true,
-    "final_ats_score": 65.2,
+    "final_ats_score": 74.9,
     "subscores": {
-      "skill_coverage": 0.2,
-      "experience_alignment": 1.0,
+      "skill_coverage": 0.83,
+      "experience_alignment": 0.5,
       "knowledge_alignment": 0.2,
       "category_coverage": 1.0
     }
   },
   "recommendations": {
-    "quantification": [
-      "Specify the scale of the payments platform (e.g., transactions/second or users supported).",
-      "Clarify the volume of invoices processed by the OCR pipeline (e.g., daily/monthly).",
-      "Add metrics for the Hackathon prototype (e.g., user load tested, features implemented).",
-      "Quantify the impact of React optimizations (e.g., page load time reduction in ms).",
-      "Include team size or scope for the ETL runtime improvement (e.g., data volume processed)."
-    ],
+    "quantification": [],
     "next_skills_to_learn": [
-      "adhering to development standards (dev-to-release lifecycle)",
-      "applying judgement to unblock tasks",
-      "C++",
-      "data analysis",
-      "giving/receiving feedback"
+      "c++"
     ]
   }
 }

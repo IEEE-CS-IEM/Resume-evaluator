@@ -31,10 +31,47 @@ def evaluate_resume_against_jd(
         evaluation["scores"],
     )
 
+    def _prune_resume_summary(summary: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(summary, dict):
+            return summary
+        pruned = {
+            key: value
+            for key, value in summary.items()
+            if key
+            not in {
+                "summary_text",
+                "quantifiable_highlights",
+                "leadership_experience",
+                "knowledge_statements",
+                "quantification_suggestions",
+            }
+        }
+        return pruned
+
+    def _prune_jd_summary(summary: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(summary, dict):
+            return summary
+        pruned = {
+            key: value
+            for key, value in summary.items()
+            if key not in {"raw_text", "llm_summary"}
+        }
+        return pruned
+
+    def _prune_fit_report(report: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(report, dict):
+            return report
+        pruned = {
+            key: value
+            for key, value in report.items()
+            if key not in {"narrative"}
+        }
+        return pruned
+
     return {
-        "resume_summary": resume_summary,
+        "resume_summary": _prune_resume_summary(resume_summary),
         "resume_signals": resume_signals,
-        "jd_summary": jd_summary,
+        "jd_summary": _prune_jd_summary(jd_summary),
         "matching_evaluation": evaluation,
-        "llm_fit_report": llm_evaluation,
+        "llm_fit_report": _prune_fit_report(llm_evaluation),
     }
